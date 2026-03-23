@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "EsnafPay",
+    "slug": "esnafpayapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B35"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.esnafpay.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FF6B35"
+      },
+      "package": "com.esnafpay.app"
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}
