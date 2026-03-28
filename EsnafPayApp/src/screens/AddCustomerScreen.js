@@ -17,6 +17,7 @@ import { customerApi } from '../api/client';
 export default function AddCustomerScreen({ navigation, route }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,7 @@ export default function AddCustomerScreen({ navigation, route }) {
     }
     setLoading(true);
     try {
-      await customerApi.create({ name: name.trim(), phone: phone.trim(), notes: notes.trim() });
+      await customerApi.create({ name: name.trim(), phone: phone.trim(), address: address.trim(), notes: notes.trim() });
       route.params?.onAdded?.();
       navigation.goBack();
     } catch (err) {
@@ -82,6 +83,19 @@ export default function AddCustomerScreen({ navigation, route }) {
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
+            />
+          </View>
+
+          {/* Adres */}
+          <View style={styles.inputBlock}>
+            <Text style={styles.label}>ADRES (opsiyonel)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Mahalle, sokak, kapı no..."
+              placeholderTextColor={colors.muted}
+              value={address}
+              onChangeText={setAddress}
+              autoCapitalize="sentences"
             />
           </View>
 

@@ -16,13 +16,14 @@ router.get('/', auth, async (req, res) => {
 // Yeni müşteri ekle
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, phone, notes } = req.body;
+    const { name, phone, address, notes } = req.body;
     if (!name?.trim()) return res.status(400).json({ message: 'Müşteri adı zorunludur' });
 
     const customer = await Customer.create({
       esnafId: req.user.userId,
       name: name.trim(),
       phone: phone?.trim() || '',
+      address: address?.trim() || '',
       notes: notes?.trim() || '',
     });
     res.status(201).json(customer);
@@ -45,12 +46,12 @@ router.get('/:id', auth, async (req, res) => {
 // Müşteri güncelle
 router.put('/:id', auth, async (req, res) => {
   try {
-    const { name, phone, notes } = req.body;
+    const { name, phone, address, notes } = req.body;
     if (!name?.trim()) return res.status(400).json({ message: 'Müşteri adı zorunludur' });
 
     const customer = await Customer.findOneAndUpdate(
       { _id: req.params.id, esnafId: req.user.userId },
-      { name: name.trim(), phone: phone?.trim() || '', notes: notes?.trim() || '' },
+      { name: name.trim(), phone: phone?.trim() || '', address: address?.trim() || '', notes: notes?.trim() || '' },
       { new: true }
     );
     if (!customer) return res.status(404).json({ message: 'Müşteri bulunamadı' });

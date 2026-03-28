@@ -24,6 +24,11 @@ const customerSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  address: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   notes: {
     type: String,
     default: '',
