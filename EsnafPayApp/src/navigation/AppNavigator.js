@@ -9,6 +9,8 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import EsnafHomeScreen from '../screens/EsnafHomeScreen';
 import MusteriHomeScreen from '../screens/MusteriHomeScreen';
+import AddCustomerScreen from '../screens/AddCustomerScreen';
+import CustomerDetailScreen from '../screens/CustomerDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,7 +35,11 @@ export default function AppNavigator() {
         </>
       ) : user.role === 'esnaf' ? (
         // Esnaf Stack
-        <Stack.Screen name="EsnafHome" component={EsnafHomeScreen} />
+        <>
+          <Stack.Screen name="EsnafHome" component={EsnafHomeScreen} />
+          <Stack.Screen name="AddCustomer" component={AddCustomerScreen} />
+          <Stack.Screen name="CustomerDetail" component={CustomerDetailScreen} />
+        </>
       ) : (
         // Müşteri Stack
         <Stack.Screen name="MusteriHome" component={MusteriHomeScreen} />
