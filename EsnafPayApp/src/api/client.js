@@ -29,6 +29,7 @@ export const customerApi = {
   getAll: () => client.get('/customers'),
   create: (data) => client.post('/customers', data),
   getById: (id) => client.get(`/customers/${id}`),
+  delete: (id) => client.delete(`/customers/${id}`),
 };
 
 export default client;
