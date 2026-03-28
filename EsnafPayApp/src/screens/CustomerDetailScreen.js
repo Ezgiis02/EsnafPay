@@ -36,11 +36,9 @@ function getAvatarColor(name = '') {
 
 export default function CustomerDetailScreen({ navigation, route }) {
   const { customer } = route.params;
-  const initials = getInitials(localCustomer.name);
-  const ac = getAvatarColor(localCustomer.name);
+  const [localCustomer, setLocalCustomer] = useState(customer);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(customer.name);
   const [editPhone, setEditPhone] = useState(customer.phone || '');
@@ -48,7 +46,9 @@ export default function CustomerDetailScreen({ navigation, route }) {
   const [editNotes, setEditNotes] = useState(customer.notes || '');
   const [editError, setEditError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [localCustomer, setLocalCustomer] = useState(customer);
+
+  const initials = getInitials(localCustomer.name);
+  const ac = getAvatarColor(localCustomer.name);
 
   const doEdit = async () => {
     setEditError('');
