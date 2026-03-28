@@ -44,6 +44,7 @@ export default function CustomerDetailScreen({ navigation, route }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(customer.name);
   const [editPhone, setEditPhone] = useState(customer.phone || '');
+  const [editAddress, setEditAddress] = useState(customer.address || '');
   const [editNotes, setEditNotes] = useState(customer.notes || '');
   const [editError, setEditError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -57,6 +58,7 @@ export default function CustomerDetailScreen({ navigation, route }) {
       const res = await customerApi.update(localCustomer._id, {
         name: editName.trim(),
         phone: editPhone.trim(),
+        address: editAddress.trim(),
         notes: editNotes.trim(),
       });
       setLocalCustomer(res.data);
@@ -110,6 +112,9 @@ export default function CustomerDetailScreen({ navigation, route }) {
             <View>
               <Text style={styles.customerName}>{localCustomer.name}</Text>
               <Text style={styles.customerPhone}>{localCustomer.phone || 'Telefon eklenmedi'}</Text>
+              {localCustomer.address ? (
+                <Text style={styles.customerAddress}>📍 {localCustomer.address}</Text>
+              ) : null}
             </View>
           </View>
 
@@ -212,6 +217,16 @@ export default function CustomerDetailScreen({ navigation, route }) {
               placeholder="0 5__ ___ __ __"
               placeholderTextColor={colors.muted}
               keyboardType="phone-pad"
+            />
+
+            <Text style={styles.editLabel}>ADRES</Text>
+            <TextInput
+              style={styles.editInput}
+              value={editAddress}
+              onChangeText={setEditAddress}
+              placeholder="Adres..."
+              placeholderTextColor={colors.muted}
+              autoCapitalize="sentences"
             />
 
             <Text style={styles.editLabel}>NOT</Text>
@@ -328,6 +343,7 @@ const styles = StyleSheet.create({
   avatarText: { fontFamily: 'Nunito_800ExtraBold', fontSize: 18 },
   customerName: { fontFamily: 'Nunito_900Black', fontSize: 20, color: '#fff' },
   customerPhone: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontFamily: 'PlusJakartaSans_400Regular', marginTop: 2 },
+  customerAddress: { fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'PlusJakartaSans_400Regular', marginTop: 2 },
   statsRow: { flexDirection: 'row', gap: 10 },
   statChip: {
     flex: 1,

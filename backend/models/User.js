@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema({
     enum: ['esnaf', 'musteri'],
     required: [true, 'Hesap türü zorunludur'],
   },
+  shopName: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   createdAt: {
     type: Date,
     default: Date.now,

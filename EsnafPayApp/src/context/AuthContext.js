@@ -33,9 +33,8 @@ export const AuthProvider = ({ children }) => {
     return res.data.user;
   };
 
-  const register = async (name, phone, password, role) => {
-    await authApi.register({ name, phone, password, role });
-    // Kayıt sonrası otomatik giriş yapılmaz, kullanıcı login ekranından giriş yapmalı
+  const register = async (name, phone, password, role, shopName = '') => {
+    await authApi.register({ name, phone, password, role, shopName });
   };
 
   const logout = async () => {

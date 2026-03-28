@@ -103,6 +103,9 @@ export default function EsnafHomeScreen({ navigation }) {
             <View>
               <Text style={styles.greeting}>Günaydın 👋</Text>
               <Text style={styles.userName}>{user?.name || 'Esnaf'}</Text>
+              {user?.shopName ? (
+                <Text style={styles.shopName}>🏪 {user.shopName}</Text>
+              ) : null}
             </View>
             <TouchableOpacity onPress={() => setShowLogoutModal(true)} style={styles.logoutBtn}>
               <Text style={styles.logoutText}>Çıkış</Text>
@@ -257,6 +260,7 @@ const styles = StyleSheet.create({
   },
   greeting: { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontFamily: 'PlusJakartaSans_600SemiBold' },
   userName: { fontSize: 22, fontFamily: 'Nunito_900Black', color: '#fff', marginTop: 2 },
+  shopName: { fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 2 },
   logoutBtn: {
     backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: 14,
