@@ -42,6 +42,24 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+// Müşteri güncelle
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { name, phone, notes } = req.body;
+    if (!name?.trim()) return res.status(400).json({ message: 'Müşteri adı zorunludur' });
+
+    const customer = await Customer.findOneAndUpdate(
+      { _id: req.params.id, esnafId: req.user.userId },
+      { name: name.trim(), phone: phone?.trim() || '', notes: notes?.trim() || '' },
+      { new: true }
+    );
+    if (!customer) return res.status(404).json({ message: 'Müşteri bulunamadı' });
+    res.json(customer);
+  } catch (err) {
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+});
+
 // Müşteri sil
 router.delete('/:id', auth, async (req, res) => {
   try {

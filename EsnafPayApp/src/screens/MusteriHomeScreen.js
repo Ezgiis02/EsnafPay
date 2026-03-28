@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +13,7 @@ import { colors } from '../theme/colors';
 
 export default function MusteriHomeScreen() {
   const { user, logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -23,7 +25,7 @@ export default function MusteriHomeScreen() {
               <Text style={styles.greeting}>Merhaba 👋</Text>
               <Text style={styles.userName}>{user?.name || 'Müşteri'}</Text>
             </View>
-            <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+            <TouchableOpacity onPress={() => setShowLogoutModal(true)} style={styles.logoutBtn}>
               <Text style={styles.logoutText}>Çıkış</Text>
             </TouchableOpacity>
           </View>
@@ -82,6 +84,27 @@ export default function MusteriHomeScreen() {
           <Text style={styles.navLabel}>Profil</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Çıkış Onay Modal */}
+      <Modal visible={showLogoutModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconWrap}>
+              <Text style={styles.modalIcon}>👋</Text>
+            </View>
+            <Text style={styles.modalTitle}>Çıkış Yap</Text>
+            <Text style={styles.modalDesc}>Hesabından çıkmak istediğine emin misin?</Text>
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setShowLogoutModal(false)}>
+                <Text style={styles.modalBtnCancelText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnLogout} onPress={logout}>
+                <Text style={styles.modalBtnLogoutText}>Çıkış Yap</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -237,4 +260,35 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito_700Bold',
     color: colors.muted,
   },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center', padding: 32,
+  },
+  modalCard: {
+    width: '100%', backgroundColor: colors.card,
+    borderRadius: 24, padding: 24, alignItems: 'center',
+  },
+  modalIconWrap: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: '#E6F9F7',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+  },
+  modalIcon: { fontSize: 28 },
+  modalTitle: { fontFamily: 'Nunito_900Black', fontSize: 20, color: colors.ink, marginBottom: 10 },
+  modalDesc: {
+    fontSize: 14, color: colors.muted,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    textAlign: 'center', lineHeight: 22, marginBottom: 24,
+  },
+  modalBtnRow: { flexDirection: 'row', gap: 12, width: '100%' },
+  modalBtnCancel: {
+    flex: 1, paddingVertical: 14, borderRadius: 14,
+    borderWidth: 1.5, borderColor: colors.border, alignItems: 'center',
+  },
+  modalBtnCancelText: { fontFamily: 'Nunito_800ExtraBold', fontSize: 15, color: colors.ink },
+  modalBtnLogout: {
+    flex: 1, paddingVertical: 14, borderRadius: 14,
+    backgroundColor: colors.teal, alignItems: 'center',
+  },
+  modalBtnLogoutText: { fontFamily: 'Nunito_800ExtraBold', fontSize: 15, color: '#fff' },
 });
