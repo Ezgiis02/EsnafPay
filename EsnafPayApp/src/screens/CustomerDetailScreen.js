@@ -5,8 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-  Platform,
+  Modal,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,37 +37,18 @@ export default function CustomerDetailScreen({ navigation, route }) {
   const { customer } = route.params;
   const initials = getInitials(customer.name);
   const ac = getAvatarColor(customer.name);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const handleDelete = () => {
-    const doDelete = async () => {
-      setDeleting(true);
-      try {
-        await customerApi.delete(customer._id);
-        navigation.goBack();
-      } catch {
-        setDeleting(false);
-        if (Platform.OS === 'web') {
-          window.alert('Müşteri silinemedi');
-        } else {
-          Alert.alert('Hata', 'Müşteri silinemedi');
-        }
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      if (window.confirm(`"${customer.name}" silinecek. Emin misin?`)) {
-        doDelete();
-      }
-    } else {
-      Alert.alert(
-        'Müşteriyi Sil',
-        `"${customer.name}" silinecek. Emin misin?`,
-        [
-          { text: 'İptal', style: 'cancel' },
-          { text: 'Sil', style: 'destructive', onPress: doDelete },
-        ]
-      );
+  const doDelete = async () => {
+    setDeleting(true);
+    try {
+      await customerApi.delete(customer._id);
+      setShowDeleteModal(false);
+      navigation.goBack();
+    } catch {
+      setDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -80,18 +60,15 @@ export default function CustomerDetailScreen({ navigation, route }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Koyu Gradient Header */}
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
               <Text style={styles.iconBtnText}>←</Text>
             </TouchableOpacity>
             <View style={{ flex: 1 }} />
-            <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} disabled={deleting}>
-              {deleting
-                ? <ActivityIndicator size="small" color="#FF7070" />
-                : <Text style={styles.deleteBtnText}>Sil</Text>
-              }
+            <TouchableOpacity style={styles.deleteBtn} onPress={() => setShowDeleteModal(true)}>
+              <Text style={styles.deleteBtnText}>Sil</Text>
             </TouchableOpacity>
           </View>
 
@@ -156,10 +133,7 @@ export default function CustomerDetailScreen({ navigation, route }) {
 
       {/* Bottom Nav */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigation.navigate('EsnafHome')}
-        >
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('EsnafHome')}>
           <Text style={styles.navIcon}>🏠</Text>
           <Text style={[styles.navLabel, { color: colors.orange }]}>Ana Sayfa</Text>
         </TouchableOpacity>
@@ -176,6 +150,47 @@ export default function CustomerDetailScreen({ navigation, route }) {
           <Text style={styles.navLabel}>Profil</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Silme Onay Modal */}
+      <Modal visible={showDeleteModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            {/* İkon */}
+            <View style={styles.modalIconWrap}>
+              <Text style={styles.modalIcon}>🗑️</Text>
+            </View>
+
+            <Text style={styles.modalTitle}>Müşteriyi Sil</Text>
+            <Text style={styles.modalDesc}>
+              <Text style={{ fontFamily: 'Nunito_800ExtraBold', color: colors.ink }}>
+                {customer.name}
+              </Text>
+              {' '}adlı müşteri kalıcı olarak silinecek.{'\n'}Bu işlem geri alınamaz.
+            </Text>
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalBtnCancel}
+                onPress={() => setShowDeleteModal(false)}
+                disabled={deleting}
+              >
+                <Text style={styles.modalBtnCancelText}>İptal</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalBtnDelete, deleting && { opacity: 0.7 }]}
+                onPress={doDelete}
+                disabled={deleting}
+              >
+                {deleting
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.modalBtnDeleteText}>Evet, Sil</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -183,7 +198,6 @@ export default function CustomerDetailScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
 
-  // Header — koyu gradient (ink teması)
   header: {
     backgroundColor: colors.ink,
     paddingHorizontal: 18,
@@ -233,7 +247,6 @@ const styles = StyleSheet.create({
   statVal: { fontFamily: 'Nunito_900Black', fontSize: 17 },
   statLbl: { fontSize: 10, color: 'rgba(255,255,255,0.6)', fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 2 },
 
-  // Aksiyonlar
   actionRow: {
     flexDirection: 'row',
     gap: 8,
@@ -253,7 +266,6 @@ const styles = StyleSheet.create({
   actionIcon: { fontSize: 18 },
   actionLabel: { fontSize: 10, fontFamily: 'Nunito_700Bold', color: colors.ink2, marginTop: 2 },
 
-  // Borç Listesi
   section: {
     marginHorizontal: 18,
     marginTop: 8,
@@ -274,7 +286,6 @@ const styles = StyleSheet.create({
   emptyTitle: { fontFamily: 'Nunito_800ExtraBold', fontSize: 14, color: colors.ink, marginBottom: 4 },
   emptySub: { fontSize: 12, color: colors.muted, fontFamily: 'PlusJakartaSans_400Regular', textAlign: 'center' },
 
-  // Bottom Nav
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -288,4 +299,74 @@ const styles = StyleSheet.create({
   navItem: { alignItems: 'center', gap: 3 },
   navIcon: { fontSize: 20 },
   navLabel: { fontSize: 10, fontFamily: 'Nunito_700Bold', color: colors.muted },
+
+  // Silme Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FEF0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalIcon: { fontSize: 28 },
+  modalTitle: {
+    fontFamily: 'Nunito_900Black',
+    fontSize: 20,
+    color: colors.ink,
+    marginBottom: 10,
+  },
+  modalDesc: {
+    fontSize: 14,
+    color: colors.muted,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  modalBtnRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalBtnCancel: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  modalBtnCancelText: {
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 15,
+    color: colors.ink,
+  },
+  modalBtnDelete: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#E84040',
+    alignItems: 'center',
+  },
+  modalBtnDeleteText: {
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 15,
+    color: '#fff',
+  },
 });
