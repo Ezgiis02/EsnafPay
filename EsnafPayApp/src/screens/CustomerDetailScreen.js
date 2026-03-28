@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Platform,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,27 +41,35 @@ export default function CustomerDetailScreen({ navigation, route }) {
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = () => {
-    Alert.alert(
-      'Müşteriyi Sil',
-      `"${customer.name}" silinecek. Emin misin?`,
-      [
-        { text: 'İptal', style: 'cancel' },
-        {
-          text: 'Sil',
-          style: 'destructive',
-          onPress: async () => {
-            setDeleting(true);
-            try {
-              await customerApi.delete(customer._id);
-              navigation.goBack();
-            } catch {
-              Alert.alert('Hata', 'Müşteri silinemedi');
-              setDeleting(false);
-            }
-          },
-        },
-      ]
-    );
+    const doDelete = async () => {
+      setDeleting(true);
+      try {
+        await customerApi.delete(customer._id);
+        navigation.goBack();
+      } catch {
+        setDeleting(false);
+        if (Platform.OS === 'web') {
+          window.alert('Müşteri silinemedi');
+        } else {
+          Alert.alert('Hata', 'Müşteri silinemedi');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`"${customer.name}" silinecek. Emin misin?`)) {
+        doDelete();
+      }
+    } else {
+      Alert.alert(
+        'Müşteriyi Sil',
+        `"${customer.name}" silinecek. Emin misin?`,
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Sil', style: 'destructive', onPress: doDelete },
+        ]
+      );
+    }
   };
 
   const formatDate = (d) => {
@@ -78,13 +87,10 @@ export default function CustomerDetailScreen({ navigation, route }) {
               <Text style={styles.iconBtnText}>←</Text>
             </TouchableOpacity>
             <View style={{ flex: 1 }} />
-            <TouchableOpacity style={styles.iconBtn} onPress={() => {}}>
-              <Text style={styles.iconBtnText}>✉️</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.iconBtn, { marginLeft: 8 }]} onPress={handleDelete} disabled={deleting}>
+            <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} disabled={deleting}>
               {deleting
                 ? <ActivityIndicator size="small" color="#FF7070" />
-                : <Text style={styles.iconBtnText}>🗑️</Text>
+                : <Text style={styles.deleteBtnText}>Sil</Text>
               }
             </TouchableOpacity>
           </View>
@@ -198,6 +204,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconBtnText: { color: '#fff', fontSize: 16 },
+  deleteBtn: {
+    backgroundColor: 'rgba(255,100,100,0.25)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 100,
+  },
+  deleteBtnText: { color: '#FF7070', fontFamily: 'Nunito_700Bold', fontSize: 13 },
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   avatar: {
     width: 50,
