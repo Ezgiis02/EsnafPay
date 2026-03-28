@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
@@ -19,11 +18,13 @@ export default function AddCustomerScreen({ navigation, route }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleAdd = async () => {
+    setError('');
     if (!name.trim()) {
-      Alert.alert('Hata', 'Müşteri adı zorunludur');
+      setError('Müşteri adı zorunludur');
       return;
     }
     setLoading(true);
@@ -32,7 +33,7 @@ export default function AddCustomerScreen({ navigation, route }) {
       route.params?.onAdded?.();
       navigation.goBack();
     } catch (err) {
-      Alert.alert('Hata', err.response?.data?.message || 'Müşteri eklenemedi');
+      setError(err.response?.data?.message || 'Müşteri eklenemedi');
     } finally {
       setLoading(false);
     }
@@ -51,6 +52,13 @@ export default function AddCustomerScreen({ navigation, route }) {
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {/* Hata mesajı */}
+          {error ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>⚠ {error}</Text>
+            </View>
+          ) : null}
+
           {/* Ad */}
           <View style={styles.inputBlock}>
             <Text style={styles.label}>AD SOYAD *</Text>
@@ -59,7 +67,7 @@ export default function AddCustomerScreen({ navigation, route }) {
               placeholder="Ahmet Yılmaz"
               placeholderTextColor={colors.muted}
               value={name}
-              onChangeText={setName}
+              onChangeText={(v) => { setName(v); setError(''); }}
               autoCapitalize="words"
             />
           </View>
@@ -125,6 +133,15 @@ const styles = StyleSheet.create({
   backText: { color: colors.orange, fontFamily: 'Nunito_700Bold', fontSize: 15 },
   headerTitle: { fontFamily: 'Nunito_900Black', fontSize: 17, color: colors.ink },
   content: { padding: 18, paddingTop: 22 },
+  errorBox: {
+    backgroundColor: '#FEF0F0',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#FCCACA',
+  },
+  errorText: { color: '#E84040', fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 },
   inputBlock: { marginBottom: 16 },
   label: {
     fontSize: 11,

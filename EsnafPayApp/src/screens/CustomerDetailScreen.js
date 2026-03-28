@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,15 +36,42 @@ function getAvatarColor(name = '') {
 
 export default function CustomerDetailScreen({ navigation, route }) {
   const { customer } = route.params;
-  const initials = getInitials(customer.name);
-  const ac = getAvatarColor(customer.name);
+  const initials = getInitials(localCustomer.name);
+  const ac = getAvatarColor(localCustomer.name);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState(customer.name);
+  const [editPhone, setEditPhone] = useState(customer.phone || '');
+  const [editNotes, setEditNotes] = useState(customer.notes || '');
+  const [editError, setEditError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [localCustomer, setLocalCustomer] = useState(customer);
+
+  const doEdit = async () => {
+    setEditError('');
+    if (!editName.trim()) { setEditError('Ad zorunludur'); return; }
+    setSaving(true);
+    try {
+      const res = await customerApi.update(localCustomer._id, {
+        name: editName.trim(),
+        phone: editPhone.trim(),
+        notes: editNotes.trim(),
+      });
+      setLocalCustomer(res.data);
+      setShowEditModal(false);
+    } catch (err) {
+      setEditError(err.response?.data?.message || 'Güncellenemedi');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const doDelete = async () => {
     setDeleting(true);
     try {
-      await customerApi.delete(customer._id);
+      await customerApi.delete(localCustomer._id);
       setShowDeleteModal(false);
       navigation.goBack();
     } catch {
@@ -67,7 +95,10 @@ export default function CustomerDetailScreen({ navigation, route }) {
               <Text style={styles.iconBtnText}>←</Text>
             </TouchableOpacity>
             <View style={{ flex: 1 }} />
-            <TouchableOpacity style={styles.deleteBtn} onPress={() => setShowDeleteModal(true)}>
+            <TouchableOpacity style={styles.editBtn} onPress={() => { setEditName(localCustomer.name); setEditPhone(localCustomer.phone || ''); setEditNotes(localCustomer.notes || ''); setEditError(''); setShowEditModal(true); }}>
+              <Text style={styles.editBtnText}>Düzenle</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.deleteBtn, { marginLeft: 8 }]} onPress={() => setShowDeleteModal(true)}>
               <Text style={styles.deleteBtnText}>Sil</Text>
             </TouchableOpacity>
           </View>
@@ -77,15 +108,15 @@ export default function CustomerDetailScreen({ navigation, route }) {
               <Text style={[styles.avatarText, { color: '#fff' }]}>{initials}</Text>
             </View>
             <View>
-              <Text style={styles.customerName}>{customer.name}</Text>
-              <Text style={styles.customerPhone}>{customer.phone || 'Telefon eklenmedi'}</Text>
+              <Text style={styles.customerName}>{localCustomer.name}</Text>
+              <Text style={styles.customerPhone}>{localCustomer.phone || 'Telefon eklenmedi'}</Text>
             </View>
           </View>
 
           <View style={styles.statsRow}>
             <View style={styles.statChip}>
               <Text style={[styles.statVal, { color: '#FF7070' }]}>
-                ₺{(customer.totalDebt || 0).toLocaleString('tr-TR')}
+                ₺{(localCustomer.totalDebt || 0).toLocaleString('tr-TR')}
               </Text>
               <Text style={styles.statLbl}>Toplam Borç</Text>
             </View>
@@ -151,6 +182,60 @@ export default function CustomerDetailScreen({ navigation, route }) {
         </TouchableOpacity>
       </View>
 
+      {/* Düzenleme Modal */}
+      <Modal visible={showEditModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { alignItems: 'stretch' }]}>
+            <Text style={[styles.modalTitle, { textAlign: 'left', marginBottom: 16 }]}>Müşteriyi Düzenle</Text>
+
+            {editError ? (
+              <View style={styles.editErrorBox}>
+                <Text style={styles.editErrorText}>⚠ {editError}</Text>
+              </View>
+            ) : null}
+
+            <Text style={styles.editLabel}>AD SOYAD *</Text>
+            <TextInput
+              style={[styles.editInput, editName && styles.editInputFilled]}
+              value={editName}
+              onChangeText={(v) => { setEditName(v); setEditError(''); }}
+              placeholder="Ad Soyad"
+              placeholderTextColor={colors.muted}
+              autoCapitalize="words"
+            />
+
+            <Text style={styles.editLabel}>TELEFON</Text>
+            <TextInput
+              style={styles.editInput}
+              value={editPhone}
+              onChangeText={setEditPhone}
+              placeholder="0 5__ ___ __ __"
+              placeholderTextColor={colors.muted}
+              keyboardType="phone-pad"
+            />
+
+            <Text style={styles.editLabel}>NOT</Text>
+            <TextInput
+              style={[styles.editInput, { minHeight: 70, textAlignVertical: 'top' }]}
+              value={editNotes}
+              onChangeText={setEditNotes}
+              placeholder="Not..."
+              placeholderTextColor={colors.muted}
+              multiline
+            />
+
+            <View style={[styles.modalBtnRow, { marginTop: 8 }]}>
+              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setShowEditModal(false)} disabled={saving}>
+                <Text style={styles.modalBtnCancelText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtnSave, saving && { opacity: 0.7 }]} onPress={doEdit} disabled={saving}>
+                {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.modalBtnSaveText}>Kaydet</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Silme Onay Modal */}
       <Modal visible={showDeleteModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
@@ -163,7 +248,7 @@ export default function CustomerDetailScreen({ navigation, route }) {
             <Text style={styles.modalTitle}>Müşteriyi Sil</Text>
             <Text style={styles.modalDesc}>
               <Text style={{ fontFamily: 'Nunito_800ExtraBold', color: colors.ink }}>
-                {customer.name}
+                {localCustomer.name}
               </Text>
               {' '}adlı müşteri kalıcı olarak silinecek.{'\n'}Bu işlem geri alınamaz.
             </Text>
@@ -218,6 +303,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconBtnText: { color: '#fff', fontSize: 16 },
+  editBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 100,
+  },
+  editBtnText: { color: '#fff', fontFamily: 'Nunito_700Bold', fontSize: 13 },
   deleteBtn: {
     backgroundColor: 'rgba(255,100,100,0.25)',
     paddingHorizontal: 14,
@@ -369,4 +461,41 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#fff',
   },
+  modalBtnSave: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: colors.orange,
+    alignItems: 'center',
+  },
+  modalBtnSaveText: { fontFamily: 'Nunito_800ExtraBold', fontSize: 15, color: '#fff' },
+  editErrorBox: {
+    backgroundColor: '#FEF0F0',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#FCCACA',
+  },
+  editErrorText: { color: '#E84040', fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 },
+  editLabel: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.muted,
+    letterSpacing: 0.8,
+    marginBottom: 6,
+    marginTop: 10,
+  },
+  editInput: {
+    backgroundColor: colors.bg,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.ink,
+  },
+  editInputFilled: { borderColor: colors.orange, backgroundColor: colors.orangeLight },
 });
