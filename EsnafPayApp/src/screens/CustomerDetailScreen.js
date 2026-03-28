@@ -149,7 +149,7 @@ export default function CustomerDetailScreen({ navigation, route }) {
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyIcon}>📋</Text>
             <Text style={styles.emptyTitle}>Henüz borç kaydı yok</Text>
-            <Text style={styles.emptySub}>Borç ekleme özelliği 3. haftada gelecek.</Text>
+            <Text style={styles.emptySub}>Henüz borç kaydı bulunmuyor.</Text>
           </View>
         </View>
       </ScrollView>
