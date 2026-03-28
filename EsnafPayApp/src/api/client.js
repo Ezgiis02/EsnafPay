@@ -25,4 +25,10 @@ export const authApi = {
   login: (data) => client.post('/auth/login', data),
 };
 
+export const customerApi = {
+  getAll: () => client.get('/customers'),
+  create: (data) => client.post('/customers', data),
+  getById: (id) => client.get(`/customers/${id}`),
+};
+
 export default client;
