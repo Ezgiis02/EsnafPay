@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
+import { customerApi } from '../api/client';
 
 const AVATAR_COLORS = [
   { bg: '#FEF0F0', fg: '#E84040' },
@@ -34,6 +37,31 @@ export default function CustomerDetailScreen({ navigation, route }) {
   const { customer } = route.params;
   const initials = getInitials(customer.name);
   const ac = getAvatarColor(customer.name);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Müşteriyi Sil',
+      `"${customer.name}" silinecek. Emin misin?`,
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await customerApi.delete(customer._id);
+              navigation.goBack();
+            } catch {
+              Alert.alert('Hata', 'Müşteri silinemedi');
+              setDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const formatDate = (d) => {
     if (!d) return '—';
@@ -50,8 +78,14 @@ export default function CustomerDetailScreen({ navigation, route }) {
               <Text style={styles.iconBtnText}>←</Text>
             </TouchableOpacity>
             <View style={{ flex: 1 }} />
-            <TouchableOpacity style={styles.iconBtn}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => {}}>
               <Text style={styles.iconBtnText}>✉️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.iconBtn, { marginLeft: 8 }]} onPress={handleDelete} disabled={deleting}>
+              {deleting
+                ? <ActivityIndicator size="small" color="#FF7070" />
+                : <Text style={styles.iconBtnText}>🗑️</Text>
+              }
             </TouchableOpacity>
           </View>
 
