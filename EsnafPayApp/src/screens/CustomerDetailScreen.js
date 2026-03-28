@@ -9,197 +9,236 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 
+const AVATAR_COLORS = [
+  { bg: '#FEF0F0', fg: '#E84040' },
+  { bg: '#FEF7E8', fg: '#F5A623' },
+  { bg: '#E6F9F7', fg: '#00B4A0' },
+  { bg: '#E8FAF2', fg: '#1AAD72' },
+  { bg: '#FFF0EB', fg: '#FF6B35' },
+  { bg: '#EEF0FF', fg: '#5A67F2' },
+];
+
+function getInitials(name = '') {
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+}
+
+function getAvatarColor(name = '') {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
 export default function CustomerDetailScreen({ navigation, route }) {
   const { customer } = route.params;
+  const initials = getInitials(customer.name);
+  const ac = getAvatarColor(customer.name);
 
   const formatDate = (d) => {
     if (!d) return '—';
-    return new Date(d).toLocaleDateString('tr-TR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+    return new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Geri</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Müşteri Detayı</Text>
-        <View style={{ width: 60 }} />
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Profil Kartı */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{customer.name.charAt(0).toUpperCase()}</Text>
-          </View>
-          <Text style={styles.customerName}>{customer.name}</Text>
-          {customer.phone ? (
-            <Text style={styles.customerPhone}>{customer.phone}</Text>
-          ) : null}
-          {customer.notes ? (
-            <Text style={styles.customerNotes}>{customer.notes}</Text>
-          ) : null}
-        </View>
-
-        {/* Borç Özeti */}
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryCard}>
-            <Text style={[styles.summaryVal, { color: colors.orange }]}>
-              ₺{(customer.totalDebt || 0).toLocaleString('tr-TR')}
-            </Text>
-            <Text style={styles.summaryLbl}>Toplam Borç</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryVal}>{formatDate(customer.lastTransactionDate)}</Text>
-            <Text style={styles.summaryLbl}>Son İşlem</Text>
-          </View>
-        </View>
-
-        {/* Borç Kayıtları */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>BORÇ KAYITLARI</Text>
-            <TouchableOpacity>
-              <Text style={styles.sectionAction}>+ Borç Ekle</Text>
+        {/* Koyu Gradient Header */}
+        <View style={styles.header}>
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+              <Text style={styles.iconBtnText}>←</Text>
+            </TouchableOpacity>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity style={styles.iconBtn}>
+              <Text style={styles.iconBtnText}>✉️</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyIcon}>📋</Text>
-            <Text style={styles.emptyTitle}>Henüz borç kaydı yok</Text>
-            <Text style={styles.emptySub}>
-              Borç ekleme özelliği 3. haftada gelecek.
-            </Text>
+          <View style={styles.profileRow}>
+            <View style={[styles.avatar, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+              <Text style={[styles.avatarText, { color: '#fff' }]}>{initials}</Text>
+            </View>
+            <View>
+              <Text style={styles.customerName}>{customer.name}</Text>
+              <Text style={styles.customerPhone}>{customer.phone || 'Telefon eklenmedi'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statChip}>
+              <Text style={[styles.statVal, { color: '#FF7070' }]}>
+                ₺{(customer.totalDebt || 0).toLocaleString('tr-TR')}
+              </Text>
+              <Text style={styles.statLbl}>Toplam Borç</Text>
+            </View>
+            <View style={styles.statChip}>
+              <Text style={[styles.statVal, { color: '#5EEDC0' }]}>₺0</Text>
+              <Text style={styles.statLbl}>Ödenen</Text>
+            </View>
+            <View style={styles.statChip}>
+              <Text style={[styles.statVal, { color: '#FFD580' }]}>0</Text>
+              <Text style={styles.statLbl}>Taksit</Text>
+            </View>
           </View>
         </View>
 
-        {/* Taksit Durumu */}
+        {/* Aksiyon Butonları */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.actionBtn}>
+            <Text style={styles.actionIcon}>➕</Text>
+            <Text style={styles.actionLabel}>Borç Ekle</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn}>
+            <Text style={styles.actionIcon}>📅</Text>
+            <Text style={styles.actionLabel}>Taksit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn}>
+            <Text style={styles.actionIcon}>💬</Text>
+            <Text style={styles.actionLabel}>Mesaj</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn}>
+            <Text style={styles.actionIcon}>📞</Text>
+            <Text style={styles.actionLabel}>Ara</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Borç Geçmişi */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>TAKSİT DURUMU</Text>
+          <Text style={styles.sectionTitle}>BORÇ GEÇMİŞİ</Text>
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyIcon}>📅</Text>
-            <Text style={styles.emptyTitle}>Aktif taksit yok</Text>
-            <Text style={styles.emptySub}>Taksit planı 4. haftada eklenecek.</Text>
+            <Text style={styles.emptyIcon}>📋</Text>
+            <Text style={styles.emptyTitle}>Henüz borç kaydı yok</Text>
+            <Text style={styles.emptySub}>Borç ekleme özelliği 3. haftada gelecek.</Text>
           </View>
         </View>
       </ScrollView>
+
+      {/* Bottom Nav */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('EsnafHome')}
+        >
+          <Text style={styles.navIcon}>🏠</Text>
+          <Text style={[styles.navLabel, { color: colors.orange }]}>Ana Sayfa</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Text style={styles.navIcon}>📋</Text>
+          <Text style={styles.navLabel}>Borçlar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Text style={styles.navIcon}>💬</Text>
+          <Text style={styles.navLabel}>Mesajlar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Text style={styles.navIcon}>👤</Text>
+          <Text style={styles.navLabel}>Profil</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
+
+  // Header — koyu gradient (ink teması)
   header: {
+    backgroundColor: colors.ink,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 22,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    marginBottom: 14,
   },
-  backBtn: { width: 60 },
-  backText: { color: colors.orange, fontFamily: 'Nunito_700Bold', fontSize: 15 },
-  headerTitle: { fontFamily: 'Nunito_900Black', fontSize: 17, color: colors.ink },
-  profileCard: {
-    backgroundColor: colors.card,
-    margin: 18,
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.orangeLight,
+  iconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
-  avatarText: { fontFamily: 'Nunito_900Black', fontSize: 28, color: colors.orange },
-  customerName: { fontFamily: 'Nunito_900Black', fontSize: 20, color: colors.ink },
-  customerPhone: {
-    fontSize: 14,
-    color: colors.muted,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    marginTop: 4,
+  iconBtnText: { color: '#fff', fontSize: 16 },
+  profileRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  customerNotes: {
-    fontSize: 13,
-    color: colors.muted,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    marginTop: 8,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    marginHorizontal: 18,
-    gap: 12,
-    marginBottom: 12,
-  },
-  summaryCard: {
+  avatarText: { fontFamily: 'Nunito_800ExtraBold', fontSize: 18 },
+  customerName: { fontFamily: 'Nunito_900Black', fontSize: 20, color: '#fff' },
+  customerPhone: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontFamily: 'PlusJakartaSans_400Regular', marginTop: 2 },
+  statsRow: { flexDirection: 'row', gap: 10 },
+  statChip: {
     flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 12,
+    padding: 10,
     alignItems: 'center',
   },
-  summaryVal: {
-    fontFamily: 'Nunito_900Black',
-    fontSize: 16,
-    color: colors.ink,
+  statVal: { fontFamily: 'Nunito_900Black', fontSize: 17 },
+  statLbl: { fontSize: 10, color: 'rgba(255,255,255,0.6)', fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 2 },
+
+  // Aksiyonlar
+  actionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginHorizontal: 18,
+    marginTop: 12,
     marginBottom: 4,
   },
-  summaryLbl: {
-    fontSize: 11,
-    color: colors.muted,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+  actionBtn: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    backgroundColor: colors.card,
   },
+  actionIcon: { fontSize: 18 },
+  actionLabel: { fontSize: 10, fontFamily: 'Nunito_700Bold', color: colors.ink2, marginTop: 2 },
+
+  // Borç Listesi
   section: {
     marginHorizontal: 18,
+    marginTop: 8,
     marginBottom: 12,
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 14,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
   },
   sectionTitle: {
     fontSize: 11,
     fontFamily: 'Nunito_800ExtraBold',
     color: colors.muted,
     letterSpacing: 0.8,
-  },
-  sectionAction: {
-    fontSize: 13,
-    color: colors.orange,
-    fontFamily: 'Nunito_700Bold',
+    marginBottom: 4,
   },
   emptyWrap: { alignItems: 'center', paddingVertical: 24 },
   emptyIcon: { fontSize: 32, marginBottom: 8 },
-  emptyTitle: {
-    fontFamily: 'Nunito_800ExtraBold',
-    fontSize: 14,
-    color: colors.ink,
-    marginBottom: 4,
+  emptyTitle: { fontFamily: 'Nunito_800ExtraBold', fontSize: 14, color: colors.ink, marginBottom: 4 },
+  emptySub: { fontSize: 12, color: colors.muted, fontFamily: 'PlusJakartaSans_400Regular', textAlign: 'center' },
+
+  // Bottom Nav
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
   },
-  emptySub: {
-    fontSize: 12,
-    color: colors.muted,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    textAlign: 'center',
-  },
+  navItem: { alignItems: 'center', gap: 3 },
+  navIcon: { fontSize: 20 },
+  navLabel: { fontSize: 10, fontFamily: 'Nunito_700Bold', color: colors.muted },
 });
