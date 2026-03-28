@@ -16,6 +16,10 @@ Esnaf ve müşteri arasındaki veresiye borç takibini dijitalleştiren mobil uy
 
 ## Hafta 2 — Esnaf & Müşteri Yönetimi
 
-- Müşteri listesi: toplam borç ve son işlem tarihi özeti, arama
-- Yeni müşteri ekleme (ad, telefon, not)
-- Müşteri detay sayfası: borç kayıtları ve taksit durumu görüntüleme
+- Müşteri listesi: arama, istatistik kartları, renkli avatarlar
+- Yeni müşteri ekleme (ad, telefon, adres, not)
+- Müşteri düzenleme ve silme (onay modalı ile)
+- Müşteri detay sayfası: borç ve taksit alanları hazır
+- Kayıt ekranına dükkan adı alanı eklendi (sadece esnafta görünür)
+- Çıkış butonuna onay modalı eklendi
+- Sayfa yenilemeye gerek kalmadan liste otomatik güncelleniyor
