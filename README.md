@@ -14,13 +14,6 @@ Esnaf ve müşteri arasındaki veresiye borç takibini dijitalleştiren mobil uy
 
 ---
 
-## Hafta 3 — Borç Kaydı
-
-- Yeni borç ekleme: tutar, açıklama, tarih, tek seferlik veya taksitli seçimi
-- Borç eklenince toplam bakiye otomatik güncellenir, geçmiş tarih sırasıyla listelenir
-
----
-
 ## Hafta 2 — Esnaf & Müşteri Yönetimi
 
 - Müşteri listesi: arama, istatistik kartları, renkli avatarlar
@@ -30,3 +23,10 @@ Esnaf ve müşteri arasındaki veresiye borç takibini dijitalleştiren mobil uy
 - Kayıt ekranına dükkan adı alanı eklendi (sadece esnafta görünür)
 - Çıkış butonuna onay modalı eklendi
 - Sayfa yenilemeye gerek kalmadan liste otomatik güncelleniyor
+
+---
+
+## Hafta 3 — Borç Kaydı
+
+- Yeni borç ekleme: tutar, açıklama, tarih, tek seferlik veya taksitli seçimi
+- Borç eklenince toplam bakiye otomatik güncellenir, geçmiş tarih sırasıyla listelenir
