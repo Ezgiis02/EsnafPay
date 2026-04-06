@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
-import { customerApi } from '../api/client';
+import { customerApi, debtApi } from '../api/client';
 
 const AVATAR_COLORS = [
   { bg: '#FEF0F0', fg: '#E84040' },
@@ -49,6 +50,82 @@ export default function CustomerDetailScreen({ navigation, route }) {
 
   const initials = getInitials(localCustomer.name);
   const ac = getAvatarColor(localCustomer.name);
+  const [debts, setDebts] = useState([]);
+  const [debtsLoading, setDebtsLoading] = useState(true);
+  const [selectedDebt, setSelectedDebt] = useState(null);
+  const [showDebtModal, setShowDebtModal] = useState(false);
+  const [debtEditAmount, setDebtEditAmount] = useState('');
+  const [debtEditDesc, setDebtEditDesc] = useState('');
+  const [debtEditInstallment, setDebtEditInstallment] = useState('');
+  const [debtEditError, setDebtEditError] = useState('');
+  const [debtSaving, setDebtSaving] = useState(false);
+  const [debtDeleting, setDebtDeleting] = useState(false);
+  const [showDebtDeleteConfirm, setShowDebtDeleteConfirm] = useState(false);
+
+  const fetchDebts = useCallback(async () => {
+    try {
+      setDebtsLoading(true);
+      const res = await debtApi.getByCustomer(localCustomer._id);
+      setDebts(res.data);
+      // Toplam borcu güncel tut
+      const res2 = await customerApi.getById(localCustomer._id);
+      setLocalCustomer(res2.data);
+    } catch {
+      // sessiz hata
+    } finally {
+      setDebtsLoading(false);
+    }
+  }, [localCustomer._id]);
+
+  useFocusEffect(fetchDebts);
+
+  const openDebtModal = (debt) => {
+    setSelectedDebt(debt);
+    setDebtEditAmount(String(debt.amount));
+    setDebtEditDesc(debt.description || '');
+    setDebtEditInstallment(String(debt.installmentCount || 2));
+    setDebtEditError('');
+    setShowDebtModal(true);
+  };
+
+  const doDebtUpdate = async () => {
+    setDebtEditError('');
+    const parsed = parseFloat(debtEditAmount.replace(',', '.'));
+    if (!debtEditAmount || isNaN(parsed) || parsed <= 0) {
+      setDebtEditError('Geçerli bir tutar girin');
+      return;
+    }
+    if (selectedDebt?.type === 'taksit' && parseInt(debtEditInstallment) < 2) {
+      setDebtEditError('Taksit sayısı en az 2 olmalıdır');
+      return;
+    }
+    setDebtSaving(true);
+    try {
+      await debtApi.update(selectedDebt._id, {
+        amount: parsed,
+        description: debtEditDesc.trim(),
+        ...(selectedDebt.type === 'taksit' && { installmentCount: parseInt(debtEditInstallment) }),
+      });
+      await fetchDebts();
+      setShowDebtModal(false);
+    } catch {
+      setDebtEditError('Güncellenemedi');
+    } finally {
+      setDebtSaving(false);
+    }
+  };
+
+  const doDebtDelete = async () => {
+    setDebtDeleting(true);
+    try {
+      await debtApi.delete(selectedDebt._id);
+      await fetchDebts();
+      setShowDebtDeleteConfirm(false);
+      setShowDebtModal(false);
+    } catch {
+      setDebtDeleting(false);
+    }
+  };
 
   const doEdit = async () => {
     setEditError('');
@@ -138,7 +215,10 @@ export default function CustomerDetailScreen({ navigation, route }) {
 
         {/* Aksiyon Butonları */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionBtn}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate('AddDebt', { customer: localCustomer, onAdded: fetchDebts })}
+          >
             <Text style={styles.actionIcon}>➕</Text>
             <Text style={styles.actionLabel}>Borç Ekle</Text>
           </TouchableOpacity>
@@ -159,11 +239,17 @@ export default function CustomerDetailScreen({ navigation, route }) {
         {/* Borç Geçmişi */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>BORÇ GEÇMİŞİ</Text>
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyIcon}>📋</Text>
-            <Text style={styles.emptyTitle}>Henüz borç kaydı yok</Text>
-            <Text style={styles.emptySub}>Henüz borç kaydı bulunmuyor.</Text>
-          </View>
+          {debtsLoading ? (
+            <ActivityIndicator color={colors.orange} style={{ marginVertical: 24 }} />
+          ) : debts.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Text style={styles.emptyIcon}>📋</Text>
+              <Text style={styles.emptyTitle}>Henüz borç kaydı yok</Text>
+              <Text style={styles.emptySub}>Borç Ekle butonuyla ilk kaydı oluştur.</Text>
+            </View>
+          ) : (
+            debts.map((d) => <DebtItem key={d._id} debt={d} onPress={() => openDebtModal(d)} />)
+          )}
         </View>
       </ScrollView>
 
@@ -291,9 +377,161 @@ export default function CustomerDetailScreen({ navigation, route }) {
           </View>
         </View>
       </Modal>
+
+      {/* Borç Düzenleme Modal */}
+      <Modal visible={showDebtModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { alignItems: 'stretch' }]}>
+            <Text style={[styles.modalTitle, { textAlign: 'left', marginBottom: 16 }]}>Borç Düzenle</Text>
+
+            {debtEditError ? (
+              <View style={debtModalStyles.errorBox}>
+                <Text style={debtModalStyles.errorText}>⚠ {debtEditError}</Text>
+              </View>
+            ) : null}
+
+            <Text style={styles.editLabel}>TUTAR (₺)</Text>
+            <TextInput
+              style={[styles.editInput, debtEditAmount && styles.editInputFilled]}
+              value={debtEditAmount}
+              onChangeText={(v) => { setDebtEditAmount(v); setDebtEditError(''); }}
+              placeholder="0,00"
+              placeholderTextColor={colors.muted}
+              keyboardType="decimal-pad"
+            />
+
+            <Text style={styles.editLabel}>AÇIKLAMA</Text>
+            <TextInput
+              style={styles.editInput}
+              value={debtEditDesc}
+              onChangeText={setDebtEditDesc}
+              placeholder="Açıklama..."
+              placeholderTextColor={colors.muted}
+              autoCapitalize="sentences"
+            />
+
+            {selectedDebt?.type === 'taksit' && (
+              <>
+                <Text style={styles.editLabel}>TAKSİT SAYISI</Text>
+                <TextInput
+                  style={[styles.editInput, debtEditInstallment && styles.editInputFilled]}
+                  value={debtEditInstallment}
+                  onChangeText={(v) => { setDebtEditInstallment(v); setDebtEditError(''); }}
+                  placeholder="2"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="number-pad"
+                />
+              </>
+            )}
+
+            <View style={[styles.modalBtnRow, { marginTop: 20 }]}>
+              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setShowDebtModal(false)}>
+                <Text style={styles.modalBtnCancelText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtnSave, debtSaving && { opacity: 0.7 }]}
+                onPress={doDebtUpdate}
+                disabled={debtSaving}
+              >
+                {debtSaving
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.modalBtnSaveText}>Kaydet</Text>
+                }
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={debtModalStyles.deleteBtn}
+              onPress={() => setShowDebtDeleteConfirm(true)}
+            >
+              <Text style={debtModalStyles.deleteBtnText}>Bu borcu sil</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Borç Silme Onay Modal */}
+      <Modal visible={showDebtDeleteConfirm} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={[styles.modalIconWrap, { backgroundColor: '#FEF0F0' }]}>
+              <Text style={styles.modalIcon}>🗑️</Text>
+            </View>
+            <Text style={styles.modalTitle}>Borcu Sil</Text>
+            <Text style={styles.modalDesc}>Bu borç kaydı silinecek ve toplam borç güncellenecek. Emin misin?</Text>
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setShowDebtDeleteConfirm(false)}>
+                <Text style={styles.modalBtnCancelText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtnDelete, debtDeleting && { opacity: 0.7 }]}
+                onPress={doDebtDelete}
+                disabled={debtDeleting}
+              >
+                {debtDeleting
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.modalBtnDeleteText}>Evet, Sil</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
+
+const debtModalStyles = StyleSheet.create({
+  errorBox: { backgroundColor: '#FEF0F0', borderRadius: 10, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#FCCACA' },
+  errorText: { color: '#E84040', fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13 },
+  deleteBtn: { marginTop: 14, alignItems: 'center', paddingVertical: 10 },
+  deleteBtnText: { color: '#E84040', fontFamily: 'Nunito_700Bold', fontSize: 14 },
+});
+
+const DEBT_CONFIG = {
+  bekliyor: { icon: '🛒', iconBg: '#FEF0F0', badge: 'Bekliyor', badgeBg: '#FEF0F0', badgeColor: '#E84040', amountColor: '#E84040' },
+  taksitli: { icon: '📦', iconBg: '#FFF0EB', badge: 'Taksitli', badgeBg: '#FEF7E8', badgeColor: '#F5A623', amountColor: '#F5A623' },
+  odendi:   { icon: '✅', iconBg: '#E8FAF2', badge: 'Ödendi',   badgeBg: '#E8FAF2', badgeColor: '#1AAD72', amountColor: '#1AAD72' },
+};
+
+function DebtItem({ debt, onPress }) {
+  const cfg = DEBT_CONFIG[debt.status] || DEBT_CONFIG.bekliyor;
+  const dateStr = new Date(debt.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const sub = debt.type === 'taksit' ? `${dateStr} · ${debt.installmentCount} taksit` : dateStr;
+
+  return (
+    <TouchableOpacity style={debtStyles.row} onPress={onPress} activeOpacity={0.7}>
+      <View style={[debtStyles.iconWrap, { backgroundColor: cfg.iconBg }]}>
+        <Text style={debtStyles.icon}>{cfg.icon}</Text>
+      </View>
+      <View style={debtStyles.info}>
+        <Text style={debtStyles.desc}>{debt.description || 'Borç kaydı'}</Text>
+        <Text style={debtStyles.sub}>{sub}</Text>
+      </View>
+      <View style={debtStyles.right}>
+        <Text style={[debtStyles.amount, { color: cfg.amountColor }]}>
+          ₺{debt.amount.toLocaleString('tr-TR')}
+        </Text>
+        <View style={[debtStyles.badge, { backgroundColor: cfg.badgeBg }]}>
+          <Text style={[debtStyles.badgeText, { color: cfg.badgeColor }]}>{cfg.badge}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+const debtStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 },
+  iconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  icon: { fontSize: 16 },
+  info: { flex: 1 },
+  desc: { fontFamily: 'Nunito_800ExtraBold', fontSize: 14, color: colors.ink },
+  sub: { fontSize: 12, color: colors.muted, fontFamily: 'PlusJakartaSans_400Regular', marginTop: 1 },
+  right: { alignItems: 'flex-end', gap: 3 },
+  amount: { fontFamily: 'Nunito_800ExtraBold', fontSize: 14 },
+  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 100 },
+  badgeText: { fontSize: 11, fontFamily: 'Nunito_700Bold' },
+});
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },

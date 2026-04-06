@@ -33,4 +33,11 @@ export const customerApi = {
   delete: (id) => client.delete(`/customers/${id}`),
 };
 
+export const debtApi = {
+  getByCustomer: (customerId) => client.get(`/debts/customer/${customerId}`),
+  create: (data) => client.post('/debts', data),
+  update: (id, data) => client.put(`/debts/${id}`, data),
+  delete: (id) => client.delete(`/debts/${id}`),
+};
+
 export default client;

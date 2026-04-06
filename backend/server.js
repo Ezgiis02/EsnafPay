@@ -13,6 +13,7 @@ app.use(morgan('dev'));
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/customers', require('./routes/customers'));
+app.use('/api/debts', require('./routes/debts'));
 
 // Health check
 app.get('/api/health', (req, res) => {
