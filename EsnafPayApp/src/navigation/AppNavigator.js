@@ -12,6 +12,7 @@ import MusteriHomeScreen from '../screens/MusteriHomeScreen';
 import AddCustomerScreen from '../screens/AddCustomerScreen';
 import CustomerDetailScreen from '../screens/CustomerDetailScreen';
 import AddDebtScreen from '../screens/AddDebtScreen';
+import InstallmentScreen from '../screens/InstallmentScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,6 +42,7 @@ export default function AppNavigator() {
           <Stack.Screen name="AddCustomer" component={AddCustomerScreen} />
           <Stack.Screen name="CustomerDetail" component={CustomerDetailScreen} />
           <Stack.Screen name="AddDebt" component={AddDebtScreen} />
+          <Stack.Screen name="Installment" component={InstallmentScreen} />
         </>
       ) : (
         // Müşteri Stack

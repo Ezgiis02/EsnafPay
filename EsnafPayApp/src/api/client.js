@@ -40,4 +40,10 @@ export const debtApi = {
   delete: (id) => client.delete(`/debts/${id}`),
 };
 
+export const installmentApi = {
+  getByDebt: (debtId) => client.get(`/installments/debt/${debtId}`),
+  pay: (id) => client.put(`/installments/${id}/pay`),
+  unpay: (id) => client.put(`/installments/${id}/unpay`),
+};
+
 export default client;

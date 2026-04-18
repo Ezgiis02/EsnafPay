@@ -30,6 +30,9 @@ export default function AddDebtScreen({ navigation, route }) {
   );
   const [type, setType] = useState('tek');
   const [installmentCount, setInstallmentCount] = useState('2');
+  const [firstDueDate, setFirstDueDate] = useState(
+    new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  );
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -61,6 +64,7 @@ export default function AddDebtScreen({ navigation, route }) {
         date: parseDate(date),
         type,
         installmentCount: parseInt(installmentCount) || 2,
+        firstDueDate: parseDate(firstDueDate),
       });
       onAdded?.();
       navigation.goBack();
@@ -166,19 +170,32 @@ export default function AddDebtScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
 
-          {/* Taksit sayısı */}
+          {/* Taksit ayarları */}
           {type === 'taksit' && (
-            <View style={[styles.inputBlock, { marginTop: 12 }]}>
-              <Text style={styles.label}>TAKSİT SAYISI</Text>
-              <TextInput
-                style={[styles.input, installmentCount && styles.inputFilled]}
-                placeholder="2"
-                placeholderTextColor={colors.muted}
-                value={installmentCount}
-                onChangeText={setInstallmentCount}
-                keyboardType="number-pad"
-              />
-            </View>
+            <>
+              <View style={[styles.inputBlock, { marginTop: 12 }]}>
+                <Text style={styles.label}>TAKSİT SAYISI</Text>
+                <TextInput
+                  style={[styles.input, installmentCount && styles.inputFilled]}
+                  placeholder="2"
+                  placeholderTextColor={colors.muted}
+                  value={installmentCount}
+                  onChangeText={setInstallmentCount}
+                  keyboardType="number-pad"
+                />
+              </View>
+              <View style={styles.inputBlock}>
+                <Text style={styles.label}>İLK ÖDEME TARİHİ</Text>
+                <TextInput
+                  style={[styles.input, firstDueDate && styles.inputFilled]}
+                  placeholder="GG.AA.YYYY"
+                  placeholderTextColor={colors.muted}
+                  value={firstDueDate}
+                  onChangeText={setFirstDueDate}
+                  keyboardType="numeric"
+                />
+              </View>
+            </>
           )}
 
           <TouchableOpacity
