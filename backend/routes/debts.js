@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Debt = require('../models/Debt');
 const Customer = require('../models/Customer');
+const Installment = require('../models/Installment');
 const auth = require('../middleware/auth');
 
 // Müşterinin borç geçmişi
@@ -20,7 +21,7 @@ router.get('/customer/:customerId', auth, async (req, res) => {
 // Yeni borç ekle
 router.post('/', auth, async (req, res) => {
   try {
-    const { customerId, amount, description, date, type, installmentCount } = req.body;
+    const { customerId, amount, description, date, type, installmentCount, firstDueDate } = req.body;
 
     if (!customerId) return res.status(400).json({ message: 'Müşteri zorunludur' });
     if (!amount || isNaN(amount) || Number(amount) <= 0) return res.status(400).json({ message: 'Geçerli bir tutar girin' });
@@ -31,6 +32,9 @@ router.post('/', auth, async (req, res) => {
     const debtType = type === 'taksit' ? 'taksit' : 'tek';
     const status = debtType === 'taksit' ? 'taksitli' : 'bekliyor';
 
+    const count = debtType === 'taksit' ? Number(installmentCount) || 2 : 1;
+    const firstPaymentDate = firstDueDate ? new Date(firstDueDate) : new Date(date || Date.now());
+
     const debt = await Debt.create({
       customerId,
       esnafId: req.user.userId,
@@ -38,9 +42,31 @@ router.post('/', auth, async (req, res) => {
       description: description?.trim() || '',
       date: date ? new Date(date) : new Date(),
       type: debtType,
-      installmentCount: debtType === 'taksit' ? Number(installmentCount) || 2 : 1,
+      installmentCount: count,
       status,
+      firstDueDate: firstPaymentDate,
     });
+
+    // Taksitli ise installment kayıtlarını otomatik oluştur
+    if (debtType === 'taksit') {
+      const perInstallment = Math.floor(Number(amount) / count);
+      const remainder = Math.round((Number(amount) - perInstallment * count) * 100) / 100;
+      const installments = [];
+      for (let i = 0; i < count; i++) {
+        const dueDate = new Date(firstPaymentDate);
+        dueDate.setMonth(dueDate.getMonth() + i);
+        installments.push({
+          debtId: debt._id,
+          customerId,
+          esnafId: req.user.userId,
+          installmentNumber: i + 1,
+          amount: i === count - 1 ? perInstallment + remainder : perInstallment,
+          dueDate,
+          status: 'bekliyor',
+        });
+      }
+      await Installment.insertMany(installments);
+    }
 
     // Müşterinin toplam borcunu ve son işlem tarihini güncelle
     await Customer.findByIdAndUpdate(customerId, {
@@ -101,6 +127,7 @@ router.delete('/:id', auth, async (req, res) => {
       });
     }
 
+    await Installment.deleteMany({ debtId: debt._id });
     await debt.deleteOne();
     res.json({ message: 'Borç silindi' });
   } catch {

@@ -77,7 +77,11 @@ export default function CustomerDetailScreen({ navigation, route }) {
     }
   }, [localCustomer._id]);
 
-  useFocusEffect(fetchDebts);
+  useFocusEffect(
+    useCallback(() => {
+      fetchDebts();
+    }, [fetchDebts])
+  );
 
   const openDebtModal = (debt) => {
     setSelectedDebt(debt);
@@ -207,7 +211,9 @@ export default function CustomerDetailScreen({ navigation, route }) {
               <Text style={styles.statLbl}>Ödenen</Text>
             </View>
             <View style={styles.statChip}>
-              <Text style={[styles.statVal, { color: '#FFD580' }]}>0</Text>
+              <Text style={[styles.statVal, { color: '#FFD580' }]}>
+                {debts.filter(d => d.type === 'taksit').length}
+              </Text>
               <Text style={styles.statLbl}>Taksit</Text>
             </View>
           </View>
@@ -222,7 +228,13 @@ export default function CustomerDetailScreen({ navigation, route }) {
             <Text style={styles.actionIcon}>➕</Text>
             <Text style={styles.actionLabel}>Borç Ekle</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => {
+              const taksitliDebt = debts.find(d => d.type === 'taksit');
+              if (taksitliDebt) navigation.navigate('Installment', { debt: taksitliDebt, customer: localCustomer });
+            }}
+          >
             <Text style={styles.actionIcon}>📅</Text>
             <Text style={styles.actionLabel}>Taksit</Text>
           </TouchableOpacity>

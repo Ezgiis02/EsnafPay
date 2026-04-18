@@ -14,6 +14,7 @@ app.use(morgan('dev'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/customers', require('./routes/customers'));
 app.use('/api/debts', require('./routes/debts'));
+app.use('/api/installments', require('./routes/installments'));
 
 // Health check
 app.get('/api/health', (req, res) => {
