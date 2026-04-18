@@ -30,3 +30,14 @@ Esnaf ve müşteri arasındaki veresiye borç takibini dijitalleştiren mobil uy
 
 - Yeni borç ekleme: tutar, açıklama, tarih, tek seferlik veya taksitli seçimi
 - Borç eklenince toplam bakiye otomatik güncellenir, geçmiş tarih sırasıyla listelenir
+- Borç düzenleme ve silme (onay modalı ile)
+
+---
+
+## Hafta 4 — Taksit Planı
+
+- Taksitli borç eklendiğinde taksitler otomatik oluşuyor (aylık vadelerle)
+- Taksit ekranı: teal renkli başlık, ilerleme çubuğu, kaç taksit ödendiği ve kalan tutar
+- Her taksit için durum renklendirmesi: yeşil (ödendi), turuncu (yaklaşan), gri (bekliyor)
+- Ödendi / Geri Al butonlarıyla taksit durumu tek dokunuşla değişiyor
+- Taksit ödenince müşterinin toplam borcu otomatik güncelleniyor
