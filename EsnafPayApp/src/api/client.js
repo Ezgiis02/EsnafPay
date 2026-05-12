@@ -44,6 +44,7 @@ export const installmentApi = {
   getByDebt: (debtId) => client.get(`/installments/debt/${debtId}`),
   pay: (id) => client.put(`/installments/${id}/pay`),
   unpay: (id) => client.put(`/installments/${id}/unpay`),
+  getDueTomorrow: () => client.get('/installments/due-tomorrow'),
 };
 
 export const musteriApi = {

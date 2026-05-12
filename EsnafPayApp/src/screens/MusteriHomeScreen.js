@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
-import { musteriApi, messageApi } from '../api/client';
+import { musteriApi, messageApi, installmentApi } from '../api/client';
 
 function getInitials(name = '') {
   const parts = name.trim().split(' ').filter(Boolean);
@@ -41,6 +41,7 @@ export default function MusteriHomeScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [dueTomorrow, setDueTomorrow] = useState([]);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -61,10 +62,18 @@ export default function MusteriHomeScreen({ navigation }) {
     } catch { /* sessiz */ }
   }, []);
 
+  const fetchDueTomorrow = useCallback(async () => {
+    try {
+      const res = await installmentApi.getDueTomorrow();
+      setDueTomorrow(res.data);
+    } catch { /* sessiz */ }
+  }, []);
+
   useFocusEffect(useCallback(() => {
     fetchProfile();
     fetchUnread();
-  }, [fetchProfile, fetchUnread]));
+    fetchDueTomorrow();
+  }, [fetchProfile, fetchUnread, fetchDueTomorrow]));
 
   const totalDebt = profile.reduce((sum, p) => sum + (p.customer.totalDebt || 0), 0);
   const esnafCount = profile.length;
@@ -109,8 +118,23 @@ export default function MusteriHomeScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Yarın vadeli taksit uyarısı */}
+        {dueTomorrow.length > 0 && (
+          <View style={[styles.warningCard, styles.warningCardRed]}>
+            <Text style={styles.warningIcon}>🔔</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.warningTitle, { color: colors.red }]}>Yarın Ödeme Günün!</Text>
+              {dueTomorrow.map((inst, i) => (
+                <Text key={i} style={styles.warningText}>
+                  {inst.esnafName} — ₺{inst.amount?.toLocaleString('tr-TR')}
+                </Text>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Yaklaşan ödeme uyarısı */}
-        {approaching && (
+        {approaching && dueTomorrow.length === 0 && (
           <View style={styles.warningCard}>
             <Text style={styles.warningIcon}>⚠️</Text>
             <View style={{ flex: 1 }}>
@@ -296,6 +320,10 @@ const styles = StyleSheet.create({
     borderColor: colors.orange,
     borderRadius: 14,
     padding: 12,
+  },
+  warningCardRed: {
+    backgroundColor: colors.redLight,
+    borderColor: colors.red,
   },
   warningIcon: { fontSize: 22 },
   warningTitle: { fontSize: 12, fontFamily: 'Nunito_800ExtraBold', color: colors.orange },

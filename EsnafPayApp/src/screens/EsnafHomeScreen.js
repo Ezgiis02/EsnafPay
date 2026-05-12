@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
-import { customerApi, messageApi } from '../api/client';
+import { customerApi, messageApi, installmentApi } from '../api/client';
 
 // 2 harfli baş harf + renk paleti
 const AVATAR_COLORS = [
@@ -58,6 +58,7 @@ export default function EsnafHomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [dueTomorrow, setDueTomorrow] = useState([]);
 
   const fetchCustomers = useCallback(async () => {
     try {
@@ -78,10 +79,18 @@ export default function EsnafHomeScreen({ navigation }) {
     } catch { /* sessiz */ }
   }, []);
 
+  const fetchDueTomorrow = useCallback(async () => {
+    try {
+      const res = await installmentApi.getDueTomorrow();
+      setDueTomorrow(res.data);
+    } catch { /* sessiz */ }
+  }, []);
+
   useFocusEffect(useCallback(() => {
     fetchCustomers();
     fetchUnread();
-  }, [fetchCustomers, fetchUnread]));
+    fetchDueTomorrow();
+  }, [fetchCustomers, fetchUnread, fetchDueTomorrow]));
 
   const onRefresh = () => { setRefreshing(true); fetchCustomers(); };
 
@@ -145,6 +154,21 @@ export default function EsnafHomeScreen({ navigation }) {
             </View>
           </View>
         </View>
+
+        {/* Yarınki taksit uyarısı */}
+        {dueTomorrow.length > 0 && (
+          <View style={styles.reminderCard}>
+            <Text style={styles.reminderIcon}>🔔</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.reminderTitle}>Yarın Vadesi Dolan Taksitler</Text>
+              {dueTomorrow.map((inst, i) => (
+                <Text key={i} style={styles.reminderText}>
+                  • {inst.customerName} — ₺{inst.amount.toLocaleString('tr-TR')}
+                </Text>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Arama */}
         <View style={styles.searchWrap}>
@@ -310,6 +334,21 @@ const styles = StyleSheet.create({
   },
   statVal: { fontFamily: 'Nunito_900Black', fontSize: 18, color: '#fff' },
   statLbl: { fontSize: 10, color: 'rgba(255,255,255,0.75)', fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 1 },
+  reminderCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginHorizontal: 18,
+    marginTop: 12,
+    backgroundColor: '#FFF8E1',
+    borderWidth: 1.5,
+    borderColor: '#F5A623',
+    borderRadius: 14,
+    padding: 12,
+  },
+  reminderIcon: { fontSize: 20, marginTop: 1 },
+  reminderTitle: { fontFamily: 'Nunito_800ExtraBold', fontSize: 13, color: '#B8860B', marginBottom: 4 },
+  reminderText: { fontSize: 13, color: colors.ink, fontFamily: 'PlusJakartaSans_600SemiBold', lineHeight: 20 },
   searchWrap: { marginHorizontal: 18, marginTop: 12 },
   searchInput: {
     backgroundColor: colors.card,
