@@ -16,6 +16,7 @@ app.use('/api/customers', require('./routes/customers'));
 app.use('/api/debts', require('./routes/debts'));
 app.use('/api/installments', require('./routes/installments'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/messages', require('./routes/messages'));
 
 // Health check
 app.get('/api/health', (req, res) => {

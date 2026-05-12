@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
-import { customerApi, debtApi } from '../api/client';
+import { customerApi, debtApi, messageApi } from '../api/client';
 
 const AVATAR_COLORS = [
   { bg: '#FEF0F0', fg: '#E84040' },
@@ -240,7 +240,34 @@ export default function CustomerDetailScreen({ navigation, route }) {
             <Text style={styles.actionIcon}>📅</Text>
             <Text style={styles.actionLabel}>Taksit</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={async () => {
+              try {
+                const res = await messageApi.findMusteri(localCustomer._id);
+                const musteriUser = res.data.musteriUser;
+                navigation.navigate('Chat', {
+                  conversation: {
+                    customerId: localCustomer._id,
+                    esnafId: localCustomer.esnafId,
+                    musteriUserId: musteriUser?._id || null,
+                    customerName: localCustomer.name,
+                    totalDebt: localCustomer.totalDebt || 0,
+                  },
+                });
+              } catch {
+                navigation.navigate('Chat', {
+                  conversation: {
+                    customerId: localCustomer._id,
+                    esnafId: localCustomer.esnafId,
+                    musteriUserId: null,
+                    customerName: localCustomer.name,
+                    totalDebt: localCustomer.totalDebt || 0,
+                  },
+                });
+              }
+            }}
+          >
             <Text style={styles.actionIcon}>💬</Text>
             <Text style={styles.actionLabel}>Mesaj</Text>
           </TouchableOpacity>

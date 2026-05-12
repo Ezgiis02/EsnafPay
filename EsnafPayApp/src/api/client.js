@@ -56,4 +56,11 @@ export const notificationApi = {
   reject: (id) => client.put(`/notifications/${id}/reject`),
 };
 
+export const messageApi = {
+  getConversations: () => client.get('/messages/conversations'),
+  getMessages: (customerId) => client.get(`/messages/conversation/${customerId}`),
+  send: (data) => client.post('/messages', data),
+  findMusteri: (customerId) => client.get(`/messages/find-musteri/${customerId}`),
+};
+
 export default client;
