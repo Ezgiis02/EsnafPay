@@ -5,7 +5,7 @@ const Customer = require('../models/Customer');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-// Konuşma listesi — kullanıcıya göre
+// Konuşma listesi — tüm bağlantılar (mesaj olmasa da görünür)
 router.get('/conversations', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -14,42 +14,51 @@ router.get('/conversations', auth, async (req, res) => {
     let conversations = [];
 
     if (user.role === 'esnaf') {
-      // Esnaf: mesaj gönderdiği/aldığı her müşteri için son mesajı getir
-      const msgs = await Message.aggregate([
-        { $match: { esnafId: user._id } },
-        { $sort: { createdAt: -1 } },
-        { $group: { _id: '$customerId', lastMsg: { $first: '$$ROOT' } } },
-      ]);
-      for (const m of msgs) {
-        const customer = await Customer.findById(m._id);
-        const musteriUser = await User.findById(m.lastMsg.musteriUserId).select('name');
+      // Esnaf: tüm müşterilerini getir, varsa son mesajı ekle
+      const customers = await Customer.find({ esnafId: user._id });
+      for (const customer of customers) {
+        const lastMsg = await Message.findOne({ customerId: customer._id }).sort({ createdAt: -1 });
+        const musteriUser = lastMsg
+          ? await User.findById(lastMsg.musteriUserId).select('name')
+          : null;
         conversations.push({
-          customerId: m._id,
-          musteriUserId: m.lastMsg.musteriUserId,
-          customerName: customer?.name || 'Müşteri',
-          musteriName: musteriUser?.name || customer?.name || 'Müşteri',
-          lastMessage: m.lastMsg.text,
-          lastTime: m.lastMsg.createdAt,
+          esnafId: user._id,
+          customerId: customer._id,
+          musteriUserId: lastMsg?.musteriUserId || null,
+          customerName: customer.name,
+          musteriName: musteriUser?.name || customer.name,
+          lastMessage: lastMsg?.text || null,
+          lastTime: lastMsg?.createdAt || null,
         });
       }
+      // Son mesaja göre sırala (mesajsızlar sona)
+      conversations.sort((a, b) => {
+        if (!a.lastTime && !b.lastTime) return 0;
+        if (!a.lastTime) return 1;
+        if (!b.lastTime) return -1;
+        return new Date(b.lastTime) - new Date(a.lastTime);
+      });
     } else {
-      // Müşteri: mesaj gönderdiği/aldığı her esnaf için son mesajı getir
-      const msgs = await Message.aggregate([
-        { $match: { musteriUserId: user._id } },
-        { $sort: { createdAt: -1 } },
-        { $group: { _id: '$esnafId', lastMsg: { $first: '$$ROOT' } } },
-      ]);
-      for (const m of msgs) {
-        const esnaf = await User.findById(m._id).select('name shopName');
-        const customer = await Customer.findById(m.lastMsg.customerId);
+      // Müşteri: eşleştiği tüm esnafları getir (telefon numarasına göre)
+      const customerRecords = await Customer.find({ phone: user.phone });
+      for (const customer of customerRecords) {
+        const esnaf = await User.findById(customer.esnafId).select('name shopName');
+        const lastMsg = await Message.findOne({ customerId: customer._id }).sort({ createdAt: -1 });
         conversations.push({
-          esnafId: m._id,
-          customerId: m.lastMsg.customerId,
+          esnafId: customer.esnafId,
+          customerId: customer._id,
+          musteriUserId: user._id,
           esnafName: esnaf?.shopName || esnaf?.name || 'Esnaf',
-          lastMessage: m.lastMsg.text,
-          lastTime: m.lastMsg.createdAt,
+          lastMessage: lastMsg?.text || null,
+          lastTime: lastMsg?.createdAt || null,
         });
       }
+      conversations.sort((a, b) => {
+        if (!a.lastTime && !b.lastTime) return 0;
+        if (!a.lastTime) return 1;
+        if (!b.lastTime) return -1;
+        return new Date(b.lastTime) - new Date(a.lastTime);
+      });
     }
 
     res.json(conversations);

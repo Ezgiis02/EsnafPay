@@ -96,8 +96,8 @@ export default function MessagesScreen({ navigation }) {
             <Text style={styles.emptyTitle}>Henüz mesaj yok</Text>
             <Text style={styles.emptySub}>
               {user?.role === 'esnaf'
-                ? 'Müşteri detay sayfasından mesaj gönderebilirsin.'
-                : 'Esnaf listesinden mesaj gönderebilirsin.'}
+                ? 'Henüz müşteri eklemediniz.'
+                : 'Bir esnaf seni sisteme eklediğinde burada görünür.'}
             </Text>
           </View>
         ) : (
