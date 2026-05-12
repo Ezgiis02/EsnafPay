@@ -41,3 +41,26 @@ Esnaf ve müşteri arasındaki veresiye borç takibini dijitalleştiren mobil uy
 - Her taksit için durum renklendirmesi: yeşil (ödendi), turuncu (yaklaşan), gri (bekliyor)
 - Ödendi / Geri Al butonlarıyla taksit durumu tek dokunuşla değişiyor
 - Taksit ödenince müşterinin toplam borcu otomatik güncelleniyor
+
+---
+
+## Hafta 5 — Müşteri Paneli & Ödeme Bildirimi
+
+- Müşteri ana ekranı: toplam borç, esnaf sayısı ve yaklaşan ödeme istatistikleri
+- Eşleştiği tüm esnaflar listelenir (telefon numarası üzerinden otomatik eşleşme)
+- Yaklaşan taksit uyarı kartı: esnaf adı, tutar ve kaç gün kaldığı
+- Müşteri esnafa ödeme bildirimi gönderebilir (borç seçimi + tutar + mesaj)
+- Esnaf panelinde bekleyen bildirimler listelenir, onayla / reddet butonlarıyla işlem yapılır
+- Onaylanan ödeme bildiriminde ilgili taksit otomatik olarak ödendi işaretlenir, toplam borç güncellenir
+
+---
+
+## Hafta 6 — Mesajlaşma
+
+- Esnaf ve müşteri arasında uygulama içi anlık mesajlaşma
+- Mesajlar ekranı: tüm bağlantılar listelenir (mesaj olmasa bile), son mesaj ve saati gösterilir
+- Her iki taraf da konuşmayı başlatabilir (WhatsApp benzeri akış)
+- Mesaj baloncukları: gönderen turuncu, karşı taraf gri
+- Gün bazlı gruplama (Bugün, Dün, tarih)
+- 5 saniyede bir otomatik yenileme ile gerçek zamanlı görünüm
+- Esnaf detay sayfasında müşterinin toplam borcu chat ekranında gösterilir
