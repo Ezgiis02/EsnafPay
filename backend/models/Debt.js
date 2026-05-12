@@ -39,6 +39,10 @@ const debtSchema = new mongoose.Schema({
     enum: ['bekliyor', 'taksitli', 'odendi'],
     default: 'bekliyor',
   },
+  firstDueDate: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

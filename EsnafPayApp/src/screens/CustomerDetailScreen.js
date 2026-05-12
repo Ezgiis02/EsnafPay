@@ -231,7 +231,9 @@ export default function CustomerDetailScreen({ navigation, route }) {
           <TouchableOpacity
             style={styles.actionBtn}
             onPress={() => {
-              const taksitliDebt = debts.find(d => d.type === 'taksit');
+              // Önce aktif taksitliyi bul, yoksa herhangi bir taksitliyi al
+              const taksitliDebt = debts.find(d => d.type === 'taksit' && d.status !== 'odendi')
+                || debts.find(d => d.type === 'taksit');
               if (taksitliDebt) navigation.navigate('Installment', { debt: taksitliDebt, customer: localCustomer });
             }}
           >

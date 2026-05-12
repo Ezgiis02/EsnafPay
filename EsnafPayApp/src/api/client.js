@@ -1,9 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Fiziksel cihazda test ediyorsan localhost yerine bilgisayarının IP adresini yaz
-// Örnek: 'http://192.168.1.100:5000/api'
-// iOS Simulator: 'http://localhost:5000/api'
+// Bilgisayarda (web) test için: 'http://localhost:5000/api'
+// Telefonda test için: bilgisayarının IP'si (ipconfig ile öğren)
 const API_URL = 'http://localhost:5000/api';
 
 const client = axios.create({
@@ -44,6 +43,17 @@ export const installmentApi = {
   getByDebt: (debtId) => client.get(`/installments/debt/${debtId}`),
   pay: (id) => client.put(`/installments/${id}/pay`),
   unpay: (id) => client.put(`/installments/${id}/unpay`),
+};
+
+export const musteriApi = {
+  getMyProfile: () => client.get('/customers/my-profile'),
+};
+
+export const notificationApi = {
+  send: (data) => client.post('/notifications', data),
+  getPending: () => client.get('/notifications/pending'),
+  approve: (id) => client.put(`/notifications/${id}/approve`),
+  reject: (id) => client.put(`/notifications/${id}/reject`),
 };
 
 export default client;

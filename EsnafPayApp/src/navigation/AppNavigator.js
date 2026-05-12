@@ -13,6 +13,8 @@ import AddCustomerScreen from '../screens/AddCustomerScreen';
 import CustomerDetailScreen from '../screens/CustomerDetailScreen';
 import AddDebtScreen from '../screens/AddDebtScreen';
 import InstallmentScreen from '../screens/InstallmentScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import SendNotificationScreen from '../screens/SendNotificationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,10 +45,14 @@ export default function AppNavigator() {
           <Stack.Screen name="CustomerDetail" component={CustomerDetailScreen} />
           <Stack.Screen name="AddDebt" component={AddDebtScreen} />
           <Stack.Screen name="Installment" component={InstallmentScreen} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} />
         </>
       ) : (
         // Müşteri Stack
-        <Stack.Screen name="MusteriHome" component={MusteriHomeScreen} />
+        <>
+          <Stack.Screen name="MusteriHome" component={MusteriHomeScreen} />
+          <Stack.Screen name="SendNotification" component={SendNotificationScreen} />
+        </>
       )}
     </Stack.Navigator>
   );

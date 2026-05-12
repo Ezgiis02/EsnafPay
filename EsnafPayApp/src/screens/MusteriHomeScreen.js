@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,23 +6,74 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
+import { musteriApi } from '../api/client';
 
-export default function MusteriHomeScreen() {
+function getInitials(name = '') {
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+}
+
+function getDaysLeft(dateStr) {
+  const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+  if (diff < 0) return `${Math.abs(diff)} gün geçti`;
+  if (diff === 0) return 'Bugün';
+  return `${diff} gün kaldı`;
+}
+
+const AVATAR_COLORS = [
+  { bg: colors.orangeLight, text: colors.orange },
+  { bg: colors.tealLight, text: colors.teal },
+  { bg: colors.redLight, text: colors.red },
+  { bg: colors.greenLight, text: colors.green },
+  { bg: colors.yellowLight, text: colors.yellow },
+];
+
+export default function MusteriHomeScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const [profile, setProfile] = useState([]);  // [{ customer, esnaf, debts, nextInstallment }]
+  const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await musteriApi.getMyProfile();
+      setProfile(res.data);
+    } catch {
+      // sessiz hata
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => { fetchProfile(); }, [fetchProfile]));
+
+  const totalDebt = profile.reduce((sum, p) => sum + (p.customer.totalDebt || 0), 0);
+  const esnafCount = profile.length;
+
+  // En yakın yaklaşan taksit
+  const approaching = profile
+    .filter(p => p.nextInstallment)
+    .map(p => ({ ...p.nextInstallment, esnafName: p.esnaf?.shopName || p.esnaf?.name || 'Esnaf' }))
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
+
+  const approachingCount = profile.filter(p => p.nextInstallment).length;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
+        {/* Teal Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View>
-              <Text style={styles.greeting}>Merhaba 👋</Text>
+              <Text style={styles.greeting}>Günaydın 👋</Text>
               <Text style={styles.userName}>{user?.name || 'Müşteri'}</Text>
             </View>
             <TouchableOpacity onPress={() => setShowLogoutModal(true)} style={styles.logoutBtn}>
@@ -30,39 +81,104 @@ export default function MusteriHomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Toplam Borç Kartı */}
-          <View style={styles.totalCard}>
-            <Text style={styles.totalLabel}>TOPLAM AÇIK BORÇ</Text>
-            <Text style={styles.totalAmount}>₺0</Text>
-            <View style={styles.statsRow}>
-              <View style={styles.statChip}>
-                <Text style={styles.statVal}>0</Text>
-                <Text style={styles.statLbl}>Aktif Esnaf</Text>
-              </View>
-              <View style={styles.statChip}>
-                <Text style={styles.statVal}>0</Text>
-                <Text style={styles.statLbl}>Toplam</Text>
-              </View>
+          {/* Stats */}
+          <View style={styles.statsRow}>
+            <View style={styles.statChip}>
+              <Text style={styles.statVal}>₺{totalDebt.toLocaleString('tr-TR')}</Text>
+              <Text style={styles.statLbl}>Toplam Borcum</Text>
+            </View>
+            <View style={styles.statChip}>
+              <Text style={styles.statVal}>{esnafCount}</Text>
+              <Text style={styles.statLbl}>Esnaf</Text>
+            </View>
+            <View style={styles.statChip}>
+              <Text style={styles.statVal}>{approachingCount}</Text>
+              <Text style={styles.statLbl}>Yaklaşan</Text>
             </View>
           </View>
         </View>
 
-        {/* Esnaf Borç Listesi */}
-        <View style={styles.listSection}>
-          <Text style={styles.sectionTitle}>ESNAF LİSTESİ</Text>
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyIcon}>🧑‍💼</Text>
-            <Text style={styles.emptyTitle}>Henüz borç kaydı yok</Text>
-            <Text style={styles.emptySub}>
-              Bir esnaf seni sisteme eklediğinde borç bilgilerin burada görünür.
-            </Text>
+        {/* Yaklaşan ödeme uyarısı */}
+        {approaching && (
+          <View style={styles.warningCard}>
+            <Text style={styles.warningIcon}>⚠️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.warningTitle}>Yaklaşan Ödeme</Text>
+              <Text style={styles.warningText}>
+                {approaching.esnafName} — ₺{approaching.amount?.toLocaleString('tr-TR')} · {getDaysLeft(approaching.dueDate)}
+              </Text>
+            </View>
           </View>
+        )}
+
+        {/* Esnaf Listesi */}
+        <View style={styles.listSection}>
+          <Text style={styles.sectionTitle}>ESNAFLARIM</Text>
+
+          {loading ? (
+            <ActivityIndicator color={colors.teal} style={{ marginVertical: 32 }} />
+          ) : profile.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Text style={styles.emptyIcon}>🧑‍💼</Text>
+              <Text style={styles.emptyTitle}>Henüz borç kaydı yok</Text>
+              <Text style={styles.emptySub}>
+                Bir esnaf seni sisteme eklediğinde borç bilgilerin burada görünür.
+              </Text>
+            </View>
+          ) : (
+            profile.map((p, i) => {
+              const clr = AVATAR_COLORS[i % AVATAR_COLORS.length];
+              const esnafName = p.esnaf?.shopName || p.esnaf?.name || 'Esnaf';
+              const debt = p.customer.totalDebt || 0;
+              const activeDebts = p.debts.filter(d => d.status !== 'odendi').length;
+              const hasTaksit = p.debts.some(d => d.type === 'taksit' && d.status !== 'odendi');
+
+              return (
+                <TouchableOpacity
+                  key={p.customer._id}
+                  style={styles.listItem}
+                  onPress={() => navigation.navigate('SendNotification', { profile: p })}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.avatar, { backgroundColor: clr.bg }]}>
+                    <Text style={[styles.avatarText, { color: clr.text }]}>{getInitials(esnafName)}</Text>
+                  </View>
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName}>{esnafName}</Text>
+                    <Text style={styles.itemSub}>
+                      {activeDebts > 0
+                        ? hasTaksit ? `${activeDebts} taksit aktif` : `${activeDebts} borç bekliyor`
+                        : 'Temizlendi'}
+                    </Text>
+                  </View>
+                  <View style={styles.itemRight}>
+                    <Text style={[styles.itemAmount, { color: debt > 0 ? colors.orange : colors.green }]}>
+                      ₺{debt.toLocaleString('tr-TR')}
+                    </Text>
+                    <View style={[styles.badge, { backgroundColor: debt > 0 ? colors.orangeLight : colors.greenLight }]}>
+                      <Text style={[styles.badgeText, { color: debt > 0 ? colors.orange : colors.green }]}>
+                        {debt > 0 ? (hasTaksit ? 'Taksitli' : 'Bekliyor') : 'Temiz'}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
 
-        {/* Ödeme Bildirimi */}
-        <TouchableOpacity style={styles.payBtn} activeOpacity={0.85}>
-          <Text style={styles.payBtnText}>💸  Ödeme Bildirimi Gönder</Text>
-        </TouchableOpacity>
+        {/* Ödeme Bildirimi Butonu */}
+        {profile.length > 0 && (
+          <TouchableOpacity
+            style={styles.payBtn}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('SendNotification', { profile: profile[0] })}
+          >
+            <Text style={styles.payBtnText}>💸  Ödeme Bildirimi Gönder</Text>
+          </TouchableOpacity>
+        )}
+
+        <View style={{ height: 16 }} />
       </ScrollView>
 
       {/* Bottom Nav */}
@@ -110,10 +226,7 @@ export default function MusteriHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
+  safe: { flex: 1, backgroundColor: colors.bg },
   header: {
     backgroundColor: colors.teal,
     paddingHorizontal: 18,
@@ -143,51 +256,32 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 100,
   },
-  logoutText: {
-    color: '#fff',
-    fontFamily: 'Nunito_700Bold',
-    fontSize: 13,
-  },
-  totalCard: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
-    padding: 16,
-  },
-  totalLabel: {
-    fontSize: 11,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: 'rgba(255,255,255,0.75)',
-    letterSpacing: 0.8,
-    marginBottom: 4,
-  },
-  totalAmount: {
-    fontSize: 32,
-    fontFamily: 'Nunito_900Black',
-    color: '#fff',
-    marginBottom: 12,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
+  logoutText: { color: '#fff', fontFamily: 'Nunito_700Bold', fontSize: 13 },
+  statsRow: { flexDirection: 'row', gap: 10 },
   statChip: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 10,
-    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 12,
+    padding: 10,
     alignItems: 'center',
   },
-  statVal: {
-    fontFamily: 'Nunito_900Black',
-    fontSize: 18,
-    color: '#fff',
+  statVal: { fontFamily: 'Nunito_900Black', fontSize: 16, color: '#fff' },
+  statLbl: { fontSize: 10, color: 'rgba(255,255,255,0.75)', fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 2 },
+  warningCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 18,
+    marginTop: 14,
+    backgroundColor: colors.orangeLight,
+    borderWidth: 1.5,
+    borderColor: colors.orange,
+    borderRadius: 14,
+    padding: 12,
   },
-  statLbl: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.75)',
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    marginTop: 1,
-  },
+  warningIcon: { fontSize: 22 },
+  warningTitle: { fontSize: 12, fontFamily: 'Nunito_800ExtraBold', color: colors.orange },
+  warningText: { fontSize: 13, color: colors.ink, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 2 },
   listSection: {
     marginHorizontal: 18,
     marginTop: 14,
@@ -200,44 +294,45 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito_800ExtraBold',
     color: colors.muted,
     letterSpacing: 0.8,
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  emptyWrap: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  emptyIcon: {
-    fontSize: 40,
-    marginBottom: 10,
-  },
-  emptyTitle: {
-    fontFamily: 'Nunito_800ExtraBold',
-    fontSize: 15,
-    color: colors.ink,
-    marginBottom: 6,
-  },
+  emptyWrap: { alignItems: 'center', paddingVertical: 32 },
+  emptyIcon: { fontSize: 40, marginBottom: 10 },
+  emptyTitle: { fontFamily: 'Nunito_800ExtraBold', fontSize: 15, color: colors.ink, marginBottom: 6 },
   emptySub: {
-    fontSize: 13,
-    color: colors.muted,
+    fontSize: 13, color: colors.muted,
     fontFamily: 'PlusJakartaSans_400Regular',
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 20,
+    textAlign: 'center', lineHeight: 20, paddingHorizontal: 20,
   },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: 12,
+  },
+  avatar: {
+    width: 42, height: 42, borderRadius: 21,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarText: { fontFamily: 'Nunito_800ExtraBold', fontSize: 15 },
+  itemInfo: { flex: 1 },
+  itemName: { fontFamily: 'Nunito_800ExtraBold', fontSize: 14, color: colors.ink },
+  itemSub: { fontSize: 12, color: colors.muted, marginTop: 1, fontFamily: 'PlusJakartaSans_400Regular' },
+  itemRight: { alignItems: 'flex-end', gap: 4 },
+  itemAmount: { fontFamily: 'Nunito_800ExtraBold', fontSize: 14 },
+  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100 },
+  badgeText: { fontSize: 11, fontFamily: 'Nunito_700Bold' },
   payBtn: {
     marginHorizontal: 18,
     marginTop: 12,
-    marginBottom: 8,
     backgroundColor: colors.teal,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  payBtnText: {
-    color: '#fff',
-    fontFamily: 'Nunito_800ExtraBold',
-    fontSize: 15,
-  },
+  payBtnText: { color: '#fff', fontFamily: 'Nunito_800ExtraBold', fontSize: 15 },
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -248,18 +343,9 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     backgroundColor: colors.card,
   },
-  navItem: {
-    alignItems: 'center',
-    gap: 3,
-  },
-  navIcon: {
-    fontSize: 20,
-  },
-  navLabel: {
-    fontSize: 10,
-    fontFamily: 'Nunito_700Bold',
-    color: colors.muted,
-  },
+  navItem: { alignItems: 'center', gap: 3 },
+  navIcon: { fontSize: 20 },
+  navLabel: { fontSize: 10, fontFamily: 'Nunito_700Bold', color: colors.muted },
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center', alignItems: 'center', padding: 32,
@@ -270,7 +356,7 @@ const styles = StyleSheet.create({
   },
   modalIconWrap: {
     width: 64, height: 64, borderRadius: 32,
-    backgroundColor: '#E6F9F7',
+    backgroundColor: colors.tealLight,
     alignItems: 'center', justifyContent: 'center', marginBottom: 16,
   },
   modalIcon: { fontSize: 28 },

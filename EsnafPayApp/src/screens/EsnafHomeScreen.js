@@ -107,9 +107,17 @@ export default function EsnafHomeScreen({ navigation }) {
                 <Text style={styles.shopName}>🏪 {user.shopName}</Text>
               ) : null}
             </View>
-            <TouchableOpacity onPress={() => setShowLogoutModal(true)} style={styles.logoutBtn}>
-              <Text style={styles.logoutText}>Çıkış</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <TouchableOpacity
+                style={styles.bellBtn}
+                onPress={() => navigation.navigate('Notifications')}
+              >
+                <Text style={styles.bellIcon}>🔔</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowLogoutModal(true)} style={styles.logoutBtn}>
+                <Text style={styles.logoutText}>Çıkış</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.statsRow}>
             <View style={styles.statChip}>
@@ -269,6 +277,12 @@ const styles = StyleSheet.create({
   },
   logoutText: { color: '#fff', fontFamily: 'Nunito_700Bold', fontSize: 13 },
   statsRow: { flexDirection: 'row', gap: 10 },
+  bellBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  bellIcon: { fontSize: 18 },
   statChip: {
     flex: 1,
     backgroundColor: 'rgba(255,255,255,0.2)',
