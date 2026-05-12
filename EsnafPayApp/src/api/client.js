@@ -54,6 +54,7 @@ export const musteriApi = {
 export const notificationApi = {
   send: (data) => client.post('/notifications', data),
   getPending: () => client.get('/notifications/pending'),
+  getMy: () => client.get('/notifications/my'),
   approve: (id) => client.put(`/notifications/${id}/approve`),
   reject: (id) => client.put(`/notifications/${id}/reject`),
 };

@@ -42,6 +42,27 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Müşteri: kendi gönderdiği bildirimleri listele
+router.get('/my', auth, async (req, res) => {
+  try {
+    const notifications = await PaymentNotification.find({
+      musteriUserId: req.user.userId,
+    }).sort({ createdAt: -1 }).limit(10);
+
+    const result = await Promise.all(notifications.map(async (n) => {
+      const esnaf = await User.findById(n.esnafId).select('name shopName');
+      return {
+        ...n.toObject(),
+        esnafName: esnaf?.shopName || esnaf?.name || 'Esnaf',
+      };
+    }));
+
+    res.json(result);
+  } catch {
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+});
+
 // Esnaf: bekleyen bildirimleri listele
 router.get('/pending', auth, async (req, res) => {
   try {

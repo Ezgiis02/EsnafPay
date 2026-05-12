@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
-import { musteriApi, messageApi, installmentApi } from '../api/client';
+import { musteriApi, messageApi, installmentApi, notificationApi } from '../api/client';
 
 function getInitials(name = '') {
   const parts = name.trim().split(' ').filter(Boolean);
@@ -26,6 +26,12 @@ function getDaysLeft(dateStr) {
   if (diff === 0) return 'Bugün';
   return `${diff} gün kaldı`;
 }
+
+const NOTIF_STATUS = {
+  bekliyor:   { icon: '⏳', label: 'Bekliyor',   bg: colors.yellowLight, color: colors.yellow },
+  onaylandi:  { icon: '✅', label: 'Onaylandı',  bg: colors.greenLight,  color: colors.green },
+  reddedildi: { icon: '❌', label: 'Reddedildi', bg: colors.redLight,    color: colors.red },
+};
 
 const AVATAR_COLORS = [
   { bg: colors.orangeLight, text: colors.orange },
@@ -42,6 +48,7 @@ export default function MusteriHomeScreen({ navigation }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [dueTomorrow, setDueTomorrow] = useState([]);
+  const [myNotifs, setMyNotifs] = useState([]);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -69,11 +76,19 @@ export default function MusteriHomeScreen({ navigation }) {
     } catch { /* sessiz */ }
   }, []);
 
+  const fetchMyNotifs = useCallback(async () => {
+    try {
+      const res = await notificationApi.getMy();
+      setMyNotifs(res.data.slice(0, 3));
+    } catch { /* sessiz */ }
+  }, []);
+
   useFocusEffect(useCallback(() => {
     fetchProfile();
     fetchUnread();
     fetchDueTomorrow();
-  }, [fetchProfile, fetchUnread, fetchDueTomorrow]));
+    fetchMyNotifs();
+  }, [fetchProfile, fetchUnread, fetchDueTomorrow, fetchMyNotifs]));
 
   const totalDebt = profile.reduce((sum, p) => sum + (p.customer.totalDebt || 0), 0);
   const esnafCount = profile.length;
@@ -143,6 +158,30 @@ export default function MusteriHomeScreen({ navigation }) {
                 {approaching.esnafName} — ₺{approaching.amount?.toLocaleString('tr-TR')} · {getDaysLeft(approaching.dueDate)}
               </Text>
             </View>
+          </View>
+        )}
+
+        {/* Son Bildirimlerim */}
+        {myNotifs.length > 0 && (
+          <View style={styles.listSection}>
+            <Text style={styles.sectionTitle}>SON BİLDİRİMLERİM</Text>
+            {myNotifs.map((n) => {
+              const cfg = NOTIF_STATUS[n.status] || NOTIF_STATUS.bekliyor;
+              return (
+                <View key={n._id} style={styles.notifRow}>
+                  <View style={[styles.notifIcon, { backgroundColor: cfg.bg }]}>
+                    <Text style={{ fontSize: 14 }}>{cfg.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.notifName}>{n.esnafName}</Text>
+                    <Text style={styles.notifSub}>₺{n.amount.toLocaleString('tr-TR')} · {new Date(n.createdAt).toLocaleDateString('tr-TR')}</Text>
+                  </View>
+                  <View style={[styles.notifBadge, { backgroundColor: cfg.bg }]}>
+                    <Text style={[styles.notifBadgeText, { color: cfg.color }]}>{cfg.label}</Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -389,6 +428,15 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     backgroundColor: colors.card,
   },
+  notifRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  notifIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  notifName: { fontFamily: 'Nunito_800ExtraBold', fontSize: 13, color: colors.ink },
+  notifSub: { fontSize: 11, color: colors.muted, fontFamily: 'PlusJakartaSans_400Regular', marginTop: 1 },
+  notifBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100 },
+  notifBadgeText: { fontSize: 11, fontFamily: 'Nunito_700Bold' },
   navItem: { alignItems: 'center', gap: 3 },
   navIcon: { fontSize: 20 },
   navLabel: { fontSize: 10, fontFamily: 'Nunito_700Bold', color: colors.muted },
