@@ -1,10 +1,21 @@
+**VİDEOLAR:** [Drive Linki](https://drive.google.com/drive/folders/13Y2IwWvYogK-kv9zs1NPm-ETGjbJQ7Fr?usp=sharing)
+
+1. HAFTA : [Youtube Linki](https://youtu.be/lvVEl3hBleU)
+2. HAFTA : [Youtube Linki](https://youtu.be/tHKlP1ZimBc)
+3. HAFTA : [Youtube Linki](https://youtu.be/FnZGFShntzo)
+4. HAFTA : [Youtube Linki](https://youtu.be/T0CL_7FdPJg)
+5. HAFTA : [Youtube Linki](https://youtu.be/YC8c2SyJU5E)
+6. HAFTA : [Youtube Linki](https://youtu.be/ILBTqzbYQPk)
+7. HAFTA : [Youtube Linki](https://youtu.be/6-a4ZJM0FZg)
+
+
+
 # EsnafPay
 
 Esnaf ve müşteri arasındaki veresiye borç takibini dijitalleştiren mobil uygulama.
 
 ---
 
-**VİDEOLAR:** [Drive Linki](https://drive.google.com/drive/folders/13Y2IwWvYogK-kv9zs1NPm-ETGjbJQ7Fr?usp=sharing)
 
 ## Hafta 1 — Kimlik Doğrulama & Rol Yönetimi
 
