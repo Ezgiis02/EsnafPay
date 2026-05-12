@@ -61,6 +61,7 @@ export const messageApi = {
   getMessages: (customerId) => client.get(`/messages/conversation/${customerId}`),
   send: (data) => client.post('/messages', data),
   findMusteri: (customerId) => client.get(`/messages/find-musteri/${customerId}`),
+  getUnreadCount: () => client.get('/messages/unread-count'),
 };
 
 export default client;

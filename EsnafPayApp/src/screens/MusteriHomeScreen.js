@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
-import { musteriApi } from '../api/client';
+import { musteriApi, messageApi } from '../api/client';
 
 function getInitials(name = '') {
   const parts = name.trim().split(' ').filter(Boolean);
@@ -40,6 +40,7 @@ export default function MusteriHomeScreen({ navigation }) {
   const [profile, setProfile] = useState([]);  // [{ customer, esnaf, debts, nextInstallment }]
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -53,7 +54,17 @@ export default function MusteriHomeScreen({ navigation }) {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { fetchProfile(); }, [fetchProfile]));
+  const fetchUnread = useCallback(async () => {
+    try {
+      const res = await messageApi.getUnreadCount();
+      setUnreadCount(res.data.count || 0);
+    } catch { /* sessiz */ }
+  }, []);
+
+  useFocusEffect(useCallback(() => {
+    fetchProfile();
+    fetchUnread();
+  }, [fetchProfile, fetchUnread]));
 
   const totalDebt = profile.reduce((sum, p) => sum + (p.customer.totalDebt || 0), 0);
   const esnafCount = profile.length;
@@ -192,7 +203,14 @@ export default function MusteriHomeScreen({ navigation }) {
           <Text style={styles.navLabel}>Borçlarım</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Messages')}>
-          <Text style={styles.navIcon}>💬</Text>
+          <View style={{ position: 'relative' }}>
+            <Text style={styles.navIcon}>💬</Text>
+            {unreadCount > 0 && (
+              <View style={styles.navBadge}>
+                <Text style={styles.navBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.navLabel}>Mesajlar</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
@@ -346,6 +364,14 @@ const styles = StyleSheet.create({
   navItem: { alignItems: 'center', gap: 3 },
   navIcon: { fontSize: 20 },
   navLabel: { fontSize: 10, fontFamily: 'Nunito_700Bold', color: colors.muted },
+  navBadge: {
+    position: 'absolute', top: -4, right: -8,
+    backgroundColor: colors.teal,
+    borderRadius: 8, minWidth: 16, height: 16,
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  navBadgeText: { color: '#fff', fontSize: 9, fontFamily: 'Nunito_800ExtraBold' },
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center', alignItems: 'center', padding: 32,

@@ -14,13 +14,17 @@ router.get('/conversations', auth, async (req, res) => {
     let conversations = [];
 
     if (user.role === 'esnaf') {
-      // Esnaf: tüm müşterilerini getir, varsa son mesajı ekle
       const customers = await Customer.find({ esnafId: user._id });
       for (const customer of customers) {
         const lastMsg = await Message.findOne({ customerId: customer._id }).sort({ createdAt: -1 });
         const musteriUser = lastMsg
           ? await User.findById(lastMsg.musteriUserId).select('name')
           : null;
+        const unreadCount = await Message.countDocuments({
+          customerId: customer._id,
+          senderId: { $ne: user._id },
+          readBy: { $nin: [user._id] },
+        });
         conversations.push({
           esnafId: user._id,
           customerId: customer._id,
@@ -29,9 +33,9 @@ router.get('/conversations', auth, async (req, res) => {
           musteriName: musteriUser?.name || customer.name,
           lastMessage: lastMsg?.text || null,
           lastTime: lastMsg?.createdAt || null,
+          unreadCount,
         });
       }
-      // Son mesaja göre sırala (mesajsızlar sona)
       conversations.sort((a, b) => {
         if (!a.lastTime && !b.lastTime) return 0;
         if (!a.lastTime) return 1;
@@ -39,11 +43,15 @@ router.get('/conversations', auth, async (req, res) => {
         return new Date(b.lastTime) - new Date(a.lastTime);
       });
     } else {
-      // Müşteri: eşleştiği tüm esnafları getir (telefon numarasına göre)
       const customerRecords = await Customer.find({ phone: user.phone });
       for (const customer of customerRecords) {
         const esnaf = await User.findById(customer.esnafId).select('name shopName');
         const lastMsg = await Message.findOne({ customerId: customer._id }).sort({ createdAt: -1 });
+        const unreadCount = await Message.countDocuments({
+          customerId: customer._id,
+          senderId: { $ne: user._id },
+          readBy: { $nin: [user._id] },
+        });
         conversations.push({
           esnafId: customer.esnafId,
           customerId: customer._id,
@@ -51,6 +59,7 @@ router.get('/conversations', auth, async (req, res) => {
           esnafName: esnaf?.shopName || esnaf?.name || 'Esnaf',
           lastMessage: lastMsg?.text || null,
           lastTime: lastMsg?.createdAt || null,
+          unreadCount,
         });
       }
       conversations.sort((a, b) => {
@@ -67,11 +76,37 @@ router.get('/conversations', auth, async (req, res) => {
   }
 });
 
-// Belirli konuşmanın mesajları
+// Toplam okunmamış mesaj sayısı
+router.get('/unread-count', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const count = await Message.countDocuments({
+      senderId: { $ne: userId },
+      readBy: { $nin: [userId] },
+    });
+    res.json({ count });
+  } catch {
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+});
+
+// Belirli konuşmanın mesajları — açılınca okundu işaretle
 router.get('/conversation/:customerId', auth, async (req, res) => {
   try {
+    const userId = req.user.userId;
     const messages = await Message.find({ customerId: req.params.customerId })
       .sort({ createdAt: 1 });
+
+    // Karşı tarafın mesajlarını okundu işaretle
+    await Message.updateMany(
+      {
+        customerId: req.params.customerId,
+        senderId: { $ne: userId },
+        readBy: { $nin: [userId] },
+      },
+      { $addToSet: { readBy: userId } }
+    );
+
     res.json(messages);
   } catch {
     res.status(500).json({ message: 'Sunucu hatası' });
@@ -91,6 +126,7 @@ router.post('/', auth, async (req, res) => {
       customerId,
       senderId: req.user.userId,
       text: text.trim(),
+      readBy: [req.user.userId],
     });
     res.status(201).json(msg);
   } catch (err) {

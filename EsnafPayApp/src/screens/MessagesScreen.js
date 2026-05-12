@@ -107,6 +107,7 @@ export default function MessagesScreen({ navigation }) {
               const name = user?.role === 'esnaf'
                 ? (conv.customerName || 'Müşteri')
                 : (conv.esnafName || 'Esnaf');
+              const hasUnread = conv.unreadCount > 0;
               return (
                 <TouchableOpacity
                   key={i}
@@ -119,10 +120,19 @@ export default function MessagesScreen({ navigation }) {
                   </View>
                   <View style={styles.convInfo}>
                     <View style={styles.convTop}>
-                      <Text style={styles.convName}>{name}</Text>
-                      <Text style={styles.convTime}>{timeAgo(conv.lastTime)}</Text>
+                      <Text style={[styles.convName, hasUnread && styles.convNameBold]}>{name}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.convTime}>{timeAgo(conv.lastTime)}</Text>
+                        {hasUnread && (
+                          <View style={styles.unreadBadge}>
+                            <Text style={styles.unreadBadgeText}>
+                              {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                    <Text style={styles.convLast} numberOfLines={1}>
+                    <Text style={[styles.convLast, hasUnread && styles.convLastBold]} numberOfLines={1}>
                       {conv.lastMessage || '...'}
                     </Text>
                   </View>
@@ -172,6 +182,18 @@ const styles = StyleSheet.create({
   convInfo: { flex: 1 },
   convTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
   convName: { fontFamily: 'Nunito_800ExtraBold', fontSize: 14, color: colors.ink },
+  convNameBold: { color: colors.ink },
   convTime: { fontSize: 11, color: colors.muted, fontFamily: 'PlusJakartaSans_400Regular' },
   convLast: { fontSize: 12, color: colors.muted, fontFamily: 'PlusJakartaSans_400Regular' },
+  convLastBold: { color: colors.ink, fontFamily: 'PlusJakartaSans_600SemiBold' },
+  unreadBadge: {
+    backgroundColor: colors.orange,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 5,
+  },
+  unreadBadgeText: { color: '#fff', fontSize: 11, fontFamily: 'Nunito_800ExtraBold' },
 });
