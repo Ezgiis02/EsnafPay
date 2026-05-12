@@ -64,3 +64,16 @@ Esnaf ve müşteri arasındaki veresiye borç takibini dijitalleştiren mobil uy
 - Gün bazlı gruplama (Bugün, Dün, tarih)
 - 5 saniyede bir otomatik yenileme ile gerçek zamanlı görünüm
 - Esnaf detay sayfasında müşterinin toplam borcu chat ekranında gösterilir
+- Okunmamış mesaj sayısı rozet ile gösterilir, Mesajlar sekmesinde okunmayan kişi kalın görünür
+- Alt nav Mesajlar ikonunda okunmamış toplam sayı (9+ ile sınırlı)
+
+---
+
+## Hafta 7 — Otomatik Hatırlatmalar & Push Bildirimleri
+
+- Taksit tarihine 1 gün kala (saat 09:00) esnaf ve müşteriye otomatik hatırlatma
+- Müşteri ödeme bildirimi gönderince esnaf anlık push bildirim alır
+- Esnafın onay/reddi müşteriye push bildirim olarak düşer
+- Müşteri ana ekranında "Son Bildirimlerim" bölümü: gönderdiği bildirimlerin durumu (Bekliyor/Onaylandı/Reddedildi)
+- Yarın vadesi gelen taksitler uyarı kartıyla gösterilir (esnaf: sarı, müşteri: kırmızı)
+- Mobil cihazda (Expo Go) push bildirimler, web'de uygulama içi uyarı kartları
