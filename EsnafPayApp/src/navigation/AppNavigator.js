@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
+import usePushNotifications from '../hooks/usePushNotifications';
 
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
@@ -22,6 +23,7 @@ const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const { user, loading } = useAuth();
+  usePushNotifications(user);
 
   if (loading) {
     return (

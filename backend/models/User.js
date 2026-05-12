@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
     trim: true,
     default: '',
   },
+  expoPushToken: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

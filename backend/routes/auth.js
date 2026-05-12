@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -79,6 +80,17 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login hatası:', err.message);
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+});
+
+// PUT /api/auth/push-token — cihaz push token'ını kaydet
+router.put('/push-token', auth, async (req, res) => {
+  try {
+    const { token } = req.body;
+    await User.findByIdAndUpdate(req.user.userId, { expoPushToken: token });
+    res.json({ ok: true });
+  } catch {
     res.status(500).json({ message: 'Sunucu hatası' });
   }
 });

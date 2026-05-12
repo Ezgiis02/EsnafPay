@@ -22,6 +22,7 @@ client.interceptors.request.use(async (config) => {
 export const authApi = {
   register: (data) => client.post('/auth/register', data),
   login: (data) => client.post('/auth/login', data),
+  savePushToken: (token) => client.put('/auth/push-token', { token }),
 };
 
 export const customerApi = {

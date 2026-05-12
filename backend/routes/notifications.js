@@ -6,6 +6,7 @@ const Debt = require('../models/Debt');
 const Installment = require('../models/Installment');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const sendPush = require('../utils/sendPush');
 
 // Müşteri: ödeme bildirimi gönder
 router.post('/', auth, async (req, res) => {
@@ -22,6 +23,19 @@ router.post('/', auth, async (req, res) => {
       amount: Number(amount),
       message: message?.trim() || '',
     });
+
+    // Esnafa push bildirim gönder
+    const esnaf = await User.findById(esnafId).select('expoPushToken');
+    const musteri = await User.findById(req.user.userId).select('name');
+    const customer = await Customer.findById(customerId).select('name');
+    if (esnaf?.expoPushToken) {
+      await sendPush(
+        esnaf.expoPushToken,
+        '💸 Ödeme Bildirimi',
+        `${customer?.name || musteri?.name} ₺${Number(amount).toLocaleString('tr-TR')} ödeme bildirimi gönderdi.`
+      );
+    }
+
     res.status(201).json(notif);
   } catch (err) {
     res.status(500).json({ message: 'Sunucu hatası' });
@@ -61,7 +75,6 @@ router.put('/:id/approve', auth, async (req, res) => {
       const debt = await Debt.findById(notif.debtId);
       if (debt) {
         if (debt.type === 'taksit') {
-          // Taksitli borç: sıradaki ödenmemiş taksiti öde
           const nextInst = await Installment.findOne({
             debtId: debt._id,
             status: 'bekliyor',
@@ -76,7 +89,6 @@ router.put('/:id/approve', auth, async (req, res) => {
               $inc: { totalDebt: -nextInst.amount },
             });
 
-            // Tüm taksitler bitti mi? → borcu da ödendi yap
             const kalan = await Installment.countDocuments({
               debtId: debt._id,
               status: 'bekliyor',
@@ -86,13 +98,22 @@ router.put('/:id/approve', auth, async (req, res) => {
             }
           }
         } else {
-          // Tek seferlik borç: direkt ödendi
           await Debt.findByIdAndUpdate(notif.debtId, { status: 'odendi' });
           await Customer.findByIdAndUpdate(notif.customerId, {
             $inc: { totalDebt: -notif.amount },
           });
         }
       }
+    }
+
+    // Müşteriye push bildirim gönder
+    const musteri = await User.findById(notif.musteriUserId).select('expoPushToken');
+    if (musteri?.expoPushToken) {
+      await sendPush(
+        musteri.expoPushToken,
+        '✅ Ödeme Onaylandı',
+        `₺${notif.amount.toLocaleString('tr-TR')} tutarındaki ödemeniz onaylandı.`
+      );
     }
 
     res.json(notif);
@@ -109,6 +130,16 @@ router.put('/:id/reject', auth, async (req, res) => {
 
     notif.status = 'reddedildi';
     await notif.save();
+
+    // Müşteriye push bildirim gönder
+    const musteri = await User.findById(notif.musteriUserId).select('expoPushToken');
+    if (musteri?.expoPushToken) {
+      await sendPush(
+        musteri.expoPushToken,
+        '❌ Ödeme Reddedildi',
+        `₺${notif.amount.toLocaleString('tr-TR')} tutarındaki ödeme bildirimi reddedildi.`
+      );
+    }
 
     res.json(notif);
   } catch {
