@@ -91,11 +91,19 @@ router.put('/profile', auth, async (req, res) => {
     if (!name?.trim()) {
       return res.status(400).json({ message: 'Ad soyad zorunludur' });
     }
+
     const user = await User.findByIdAndUpdate(
       req.user.userId,
       { name: name.trim(), shopName: shopName?.trim() || '' },
       { new: true }
     );
+
+    // Müşteri ise eşleşen Customer kayıtlarının adını da güncelle
+    if (user.role === 'musteri') {
+      const Customer = require('../models/Customer');
+      await Customer.updateMany({ phone: user.phone }, { name: name.trim() });
+    }
+
     res.json({ id: user._id, name: user.name, phone: user.phone, role: user.role, shopName: user.shopName });
   } catch {
     res.status(500).json({ message: 'Sunucu hatası' });
