@@ -300,15 +300,15 @@ export default function CustomerDetailScreen({ navigation, route }) {
           <Text style={styles.navIcon}>🏠</Text>
           <Text style={[styles.navLabel, { color: colors.orange }]}>Ana Sayfa</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Debts')}>
           <Text style={styles.navIcon}>📋</Text>
           <Text style={styles.navLabel}>Borçlar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Messages')}>
           <Text style={styles.navIcon}>💬</Text>
           <Text style={styles.navLabel}>Mesajlar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.navIcon}>👤</Text>
           <Text style={styles.navLabel}>Profil</Text>
         </TouchableOpacity>
