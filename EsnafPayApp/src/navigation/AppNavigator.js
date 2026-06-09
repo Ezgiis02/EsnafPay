@@ -19,6 +19,7 @@ import SendNotificationScreen from '../screens/SendNotificationScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import DebtsScreen from '../screens/DebtsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -54,6 +55,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Messages" component={MessagesScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Debts" component={DebtsScreen} />
         </>
       ) : (
         // Müşteri Stack
@@ -63,6 +65,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Messages" component={MessagesScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Debts" component={DebtsScreen} />
         </>
       )}
     </Stack.Navigator>

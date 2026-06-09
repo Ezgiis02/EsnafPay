@@ -35,6 +35,7 @@ export const customerApi = {
 };
 
 export const debtApi = {
+  getAll: () => client.get('/debts/all'),
   getByCustomer: (customerId) => client.get(`/debts/customer/${customerId}`),
   create: (data) => client.post('/debts', data),
   update: (id, data) => client.put(`/debts/${id}`, data),

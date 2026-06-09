@@ -248,7 +248,7 @@ export default function EsnafHomeScreen({ navigation }) {
           <Text style={styles.navIcon}>🏠</Text>
           <Text style={[styles.navLabel, { color: colors.orange }]}>Ana Sayfa</Text>
         </View>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Debts')}>
           <Text style={styles.navIcon}>📋</Text>
           <Text style={styles.navLabel}>Borçlar</Text>
         </TouchableOpacity>

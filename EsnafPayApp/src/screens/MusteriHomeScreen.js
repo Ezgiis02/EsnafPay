@@ -261,7 +261,7 @@ export default function MusteriHomeScreen({ navigation }) {
           <Text style={styles.navIcon}>🏠</Text>
           <Text style={[styles.navLabel, { color: colors.teal }]}>Ana Sayfa</Text>
         </View>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Debts')}>
           <Text style={styles.navIcon}>📋</Text>
           <Text style={styles.navLabel}>Borçlarım</Text>
         </TouchableOpacity>

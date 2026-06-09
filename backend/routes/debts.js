@@ -3,7 +3,42 @@ const router = express.Router();
 const Debt = require('../models/Debt');
 const Customer = require('../models/Customer');
 const Installment = require('../models/Installment');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
+
+// Tüm borçlar — rol bazlı (log ekranı için)
+router.get('/all', auth, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.userId);
+    let debts = [];
+
+    if (currentUser.role === 'esnaf') {
+      const customers = await Customer.find({ esnafId: currentUser._id });
+      const customerIds = customers.map(c => c._id);
+      const rawDebts = await Debt.find({ customerId: { $in: customerIds } }).sort({ date: -1 });
+      debts = rawDebts.map(d => {
+        const customer = customers.find(c => String(c._id) === String(d.customerId));
+        return { ...d.toObject(), customerName: customer?.name || 'Müşteri' };
+      });
+    } else {
+      const customerRecords = await Customer.find({ phone: currentUser.phone });
+      const customerIds = customerRecords.map(c => c._id);
+      const rawDebts = await Debt.find({ customerId: { $in: customerIds } }).sort({ date: -1 });
+      debts = await Promise.all(rawDebts.map(async (d) => {
+        const customer = customerRecords.find(c => String(c._id) === String(d.customerId));
+        const esnaf = customer ? await User.findById(customer.esnafId).select('name shopName') : null;
+        return {
+          ...d.toObject(),
+          esnafName: esnaf?.shopName || esnaf?.name || 'Esnaf',
+        };
+      }));
+    }
+
+    res.json(debts);
+  } catch (err) {
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+});
 
 // Müşterinin borç geçmişi
 router.get('/customer/:customerId', auth, async (req, res) => {
