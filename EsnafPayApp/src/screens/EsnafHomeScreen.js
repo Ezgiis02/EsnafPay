@@ -263,7 +263,7 @@ export default function EsnafHomeScreen({ navigation }) {
           </View>
           <Text style={styles.navLabel}>Mesajlar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.navIcon}>👤</Text>
           <Text style={styles.navLabel}>Profil</Text>
         </TouchableOpacity>

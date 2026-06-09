@@ -37,6 +37,12 @@ export const AuthProvider = ({ children }) => {
     await authApi.register({ name, phone, password, role, shopName });
   };
 
+  const updateUser = async (updatedUser) => {
+    const merged = { ...user, ...updatedUser };
+    await AsyncStorage.setItem('user', JSON.stringify(merged));
+    setUser(merged);
+  };
+
   const logout = async () => {
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('user');
@@ -44,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

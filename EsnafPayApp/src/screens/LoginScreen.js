@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
@@ -20,18 +19,18 @@ export default function LoginScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    if (!phone.trim() || !password.trim()) {
-      Alert.alert('Hata', 'Telefon ve şifre zorunludur');
-      return;
-    }
+    setError('');
+    if (!phone.trim()) { setError('Telefon numarası zorunludur'); return; }
+    if (!password.trim()) { setError('Şifre zorunludur'); return; }
+    if (password.length < 6) { setError('Şifre en az 6 karakter olmalıdır'); return; }
     setLoading(true);
     try {
       await login(phone.trim(), password);
     } catch (err) {
-      const msg = err.response?.data?.message || 'Giriş yapılamadı';
-      Alert.alert('Hata', msg);
+      setError(err.response?.data?.message || 'Telefon veya şifre hatalı');
     } finally {
       setLoading(false);
     }
@@ -69,6 +68,13 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.tabPassiveText}>Kayıt Ol</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Hata mesajı */}
+          {error ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>⚠ {error}</Text>
+            </View>
+          ) : null}
 
           {/* Telefon */}
           <View style={styles.inputBlock}>
@@ -260,5 +266,18 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 16,
+  },
+  errorBox: {
+    backgroundColor: '#FEF0F0',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: '#FCCACA',
+  },
+  errorText: {
+    color: '#E84040',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 13,
   },
 });

@@ -84,6 +84,24 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// PUT /api/auth/profile — profil bilgilerini güncelle
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { name, shopName } = req.body;
+    if (!name?.trim()) {
+      return res.status(400).json({ message: 'Ad soyad zorunludur' });
+    }
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { name: name.trim(), shopName: shopName?.trim() || '' },
+      { new: true }
+    );
+    res.json({ id: user._id, name: user.name, phone: user.phone, role: user.role, shopName: user.shopName });
+  } catch {
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+});
+
 // PUT /api/auth/push-token — cihaz push token'ını kaydet
 router.put('/push-token', auth, async (req, res) => {
   try {
