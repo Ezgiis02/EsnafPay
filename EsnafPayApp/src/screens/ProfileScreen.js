@@ -19,7 +19,6 @@ export default function ProfileScreen({ navigation }) {
   const isEsnaf = user?.role === 'esnaf';
 
   const [editName, setEditName] = useState(user?.name || '');
-  const [editPhone, setEditPhone] = useState(user?.phone || '');
   const [editShop, setEditShop] = useState(user?.shopName || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -30,11 +29,10 @@ export default function ProfileScreen({ navigation }) {
     setError('');
     setSuccess(false);
     if (!editName.trim()) { setError('Ad soyad boş bırakılamaz'); return; }
-    if (!editPhone.trim()) { setError('Telefon numarası boş bırakılamaz'); return; }
     if (isEsnaf && !editShop.trim()) { setError('Dükkan adı boş bırakılamaz'); return; }
     setSaving(true);
     try {
-      const res = await authApi.updateProfile({ name: editName.trim(), phone: editPhone.trim(), shopName: editShop.trim() });
+      const res = await authApi.updateProfile({ name: editName.trim(), shopName: editShop.trim() });
       await updateUser(res.data);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2500);
@@ -77,12 +75,14 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Bilgi kartı */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>HESAP TÜRÜ</Text>
-          <Text style={styles.infoValue}>{isEsnaf ? 'Esnaf' : 'Müşteri'}</Text>
-          <Text style={[styles.infoLabel, { marginTop: 12 }]}>KAYIT TARİHİ</Text>
-          <Text style={styles.infoValue}>
-            {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('tr-TR') : '—'}
-          </Text>
+          <Text style={styles.infoLabel}>TELEFON</Text>
+          <Text style={styles.infoValue}>{user?.phone}</Text>
+          {isEsnaf && user?.shopName ? (
+            <>
+              <Text style={[styles.infoLabel, { marginTop: 12 }]}>DÜKKAN ADI</Text>
+              <Text style={styles.infoValue}>{user.shopName}</Text>
+            </>
+          ) : null}
         </View>
 
         {/* Düzenleme formu */}
@@ -109,16 +109,6 @@ export default function ProfileScreen({ navigation }) {
             placeholder="Ad Soyad"
             placeholderTextColor={colors.muted}
             autoCapitalize="words"
-          />
-
-          <Text style={styles.inputLabel}>TELEFON *</Text>
-          <TextInput
-            style={styles.input}
-            value={editPhone}
-            onChangeText={(v) => { setEditPhone(v); setError(''); }}
-            placeholder="0 5__ ___ __ __"
-            placeholderTextColor={colors.muted}
-            keyboardType="phone-pad"
           />
 
           {isEsnaf && (
