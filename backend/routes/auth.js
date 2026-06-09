@@ -87,13 +87,17 @@ router.post('/login', async (req, res) => {
 // PUT /api/auth/profile — profil bilgilerini güncelle
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { name, shopName } = req.body;
-    if (!name?.trim()) {
-      return res.status(400).json({ message: 'Ad soyad zorunludur' });
-    }
+    const { name, phone, shopName } = req.body;
+    if (!name?.trim()) return res.status(400).json({ message: 'Ad soyad zorunludur' });
+    if (!phone?.trim()) return res.status(400).json({ message: 'Telefon numarası zorunludur' });
+
+    // Telefon başka kullanıcıda var mı kontrol et
+    const existing = await User.findOne({ phone: phone.trim(), _id: { $ne: req.user.userId } });
+    if (existing) return res.status(400).json({ message: 'Bu telefon numarası zaten kayıtlı' });
+
     const user = await User.findByIdAndUpdate(
       req.user.userId,
-      { name: name.trim(), shopName: shopName?.trim() || '' },
+      { name: name.trim(), phone: phone.trim(), shopName: shopName?.trim() || '' },
       { new: true }
     );
     res.json({ id: user._id, name: user.name, phone: user.phone, role: user.role, shopName: user.shopName });
