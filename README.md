@@ -7,6 +7,9 @@
 5. HAFTA : [Youtube Linki](https://youtu.be/YC8c2SyJU5E)
 6. HAFTA : [Youtube Linki](https://youtu.be/ILBTqzbYQPk)
 7. HAFTA : [Youtube Linki](https://youtu.be/6-a4ZJM0FZg)
+8. HAFTA : [Youtube Linki](https://youtu.be/FEgZYQsXYp4)
+9. HAFTA : [Youtube Linki](https://youtu.be/1qgIbU2vEX0)
+10. HAFTA : [Youtube Linki](https://youtu.be/_TxhHZGeLJc)
 
 
 
