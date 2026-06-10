@@ -91,3 +91,31 @@ Esnaf ve müşteri arasındaki veresiye borç takibini dijitalleştiren mobil uy
 - Müşteri ana ekranında "Son Bildirimlerim" bölümü: gönderdiği bildirimlerin durumu (Bekliyor/Onaylandı/Reddedildi)
 - Yarın vadesi gelen taksitler uyarı kartıyla gösterilir (esnaf: sarı, müşteri: kırmızı)
 - Mobil cihazda (Expo Go) push bildirimler, web'de uygulama içi uyarı kartları
+
+---
+
+## Hafta 8 — UX İyileştirmeleri & Profil Ekranı
+
+- Profil ekranı: baş harf avatarı, rol rozeti (Esnaf / Müşteri), ad ve dükkan adı düzenleme
+- Ad değiştirilince esnafın müşteri listesindeki isim de otomatik güncellenir
+- Çıkış onay modalı profil ekranında da mevcut
+- Kayıt ekranında eksik alan ve kısa şifre için anlık hata mesajları
+- Giriş ekranında Alert yerine inline hata kutusu
+- Müşteri ve esnaf ana ekranlarındaki Profil ve Borçlar nav butonları aktif edildi
+
+---
+
+## Hafta 9 — Test & Hata Düzeltmeleri
+
+- Borç Geçmişi ekranı: tüm borç kayıtları log şeklinde listelenir (tutar, açıklama, tarih, durum)
+- Özet chips: toplam kayıt, açık borç tutarı (kırmızı), ödenen (yeşil)
+- Esnaf müşteri bazlı, müşteri esnaf bazlı borçları görebilir
+- Müşteri detay sayfasındaki alt nav butonları (Borçlar, Mesajlar, Profil) düzeltildi
+- Müşteri adı güncellenince bağlı tüm Customer kayıtları da senkronize edilir
+
+---
+
+## Hafta 10 — Final Hazırlığı
+
+- Farklı esnaf-müşteri ilişkileri ve çeşitli borç/taksit senaryolarıyla örnek veriler girildi
+- Tüm özellikler uçtan uca test edildi; sunum akışı prova edildi
